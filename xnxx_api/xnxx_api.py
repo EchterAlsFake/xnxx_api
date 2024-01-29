@@ -19,6 +19,8 @@ from functools import cached_property
 class Video:
     def __init__(self, url):
         self.url = url
+        self.available_m3u8_urls = None
+        self.available_qualities = None
         self.script_content = None
         self.html_content = None
         self.metadata_matches = None
@@ -35,7 +37,6 @@ class Video:
             self.get_metadata_matches()
             self.get_rating_metadata()
             self.extract_json_from_html()
-            print(self.script_content)
 
     def get_base_html(self):
         self.html_content = requests.get(self.url).content.decode("utf-8")
@@ -77,6 +78,63 @@ class Video:
             json_text = script_tag.string.strip()  # Get the content of the tag as a string
             data = json.loads(json_text)
             self.json_content = data
+
+    @cached_property
+    def m3u8_base_url(self):
+        return REGEX_VIDEO_M3U8.search(self.script_content).group(1)
+
+    def get_available_qualities(self):
+        response = self.session.get(self.m3u8_base_url)
+        content = response.content.decode("utf-8")
+        lines = content.splitlines()
+
+        quality_url_map = {}
+        base_qualities = ["250p", "360p", "480p", "720p", "1080p"]
+
+        for line in lines:
+            for quality in base_qualities:
+                if f"hls-{quality}" in line:
+                    quality_url_map[quality] = line
+
+        self.quality_url_map = quality_url_map
+        self.available_qualities = list(quality_url_map.keys())
+        return self.available_qualities
+
+    def get_m3u8_by_quality(self, quality: Quality):
+        self.get_available_qualities()
+        base_qualities = ["250p", "360p", "480p", "720p", "1080p"]
+        if quality == Quality.BEST:
+            selected_quality = max(self.available_qualities, key=lambda q: base_qualities.index(q))
+        elif quality == Quality.WORST:
+            selected_quality = min(self.available_qualities, key=lambda q: base_qualities.index(q))
+        elif quality == Quality.HALF:
+            sorted_qualities = sorted(self.available_qualities, key=lambda q: base_qualities.index(q))
+            middle_index = len(sorted_qualities) // 2
+            selected_quality = sorted_qualities[middle_index]
+
+        return self.quality_url_map.get(selected_quality)
+
+    def get_segments(self, quality: Quality):
+        # Some inspiration from PHUB (xD)
+        base_url = self.m3u8_base_url
+        new_segment = self.get_m3u8_by_quality(quality)
+        # Split the base URL into components
+        url_components = base_url.split('/')
+
+        # Replace the last component with the new segment
+        url_components[-1] = new_segment
+
+        # Rejoin the components into the new full URL
+        new_url = '/'.join(url_components)
+        master_src = self.session.get(url=new_url).text
+
+        urls = [l for l in master_src.splitlines()
+                if l and not l.startswith('#')]
+
+        for url in urls:
+            url_components[-1] = url
+            new_url = '/'.join(url_components)
+            yield new_url
 
     @cached_property
     def title(self) -> str:
@@ -154,8 +212,8 @@ class Client:
         return Video(url)
 
 
-video = Client().get_video("https://www.xnxx.com/video-mopdd37/im_whirlpool_gibt_die_susse_sau_ihr_allerbestes_-_ist_halt_frau_...._jasmine_rouge")
-print(video.description)
-print(video.thumbnail_url)
-print(video.upload_date)
-print(video.content_url)
+video = Client().get_video("https://www.xnxx.com/video-147v2bd5/fapadoo_4k_-_warum_hat_sie_nicht_mich_stattdessen_gefickt_")
+segments = video.get_segments(quality=Quality.BEST)
+
+for segment in segments:
+    print(segment)
