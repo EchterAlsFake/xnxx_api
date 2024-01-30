@@ -12,37 +12,47 @@ from typing import Callable
 CallbackType = Callable[[int, int], None]
 
 
-def download_segment_threaded(args):
-    url, index, length, callback = args
-    for _ in range(5):  # Retry mechanism
+def download_segment(args, retry_count=5):
+    url, length, callback, processed_segments = args
+    for attempt in range(retry_count):
         try:
             segment = requests.get(url, timeout=10)
             if segment.ok:
-                callback(index + 1, length)
+                with processed_segments.get_lock():  # Ensure thread-safe increment
+                    processed_segments.value += 1
+                    current_processed = processed_segments.value
+                callback(current_processed, length)
                 return segment.content
+        except ConnectionError as e:
+            if 'HTTPSConnectionPool' in str(e) and attempt < retry_count - 1:
+                print(f"Retry {attempt + 1} for segment due to HTTPSConnectionPool error.")
+                continue  # Retry for HTTPSConnectionPool errors
+            else:
+                print(f"Error downloading segment after {attempt + 1} attempts: {e}")
         except requests.RequestException as e:
-            print(f"Error downloading segment {index + 1}: {e}")
+            print(f"Error downloading segment: {e}")
+            break  # No retry for other types of errors
     return b''
 
 
 def threaded(video, quality, callback, path, start: int = 0, num_workers: int = 10):
+    from multiprocessing import Value
+
     segments = list(video.get_segments(quality))[start:]
     length = len(segments)
     buffer = bytearray()
 
-    # Using ThreadPoolExecutor to download segments in parallel
+    processed_segments = Value('i', 0)  # Shared value for counting processed segments
+
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        # Prepare the list of tasks
-        futures = [executor.submit(download_segment_threaded, (url, i, length, callback)) for i, url in enumerate(segments)]
+        futures = [executor.submit(download_segment, (url, length, callback, processed_segments)) for url in segments]
         for future in as_completed(futures):
             try:
-                # Collect results as they complete
                 segment_data = future.result()
                 buffer.extend(segment_data)
             except Exception as e:
-                print(f"Error in downloading segment: {e}")
+                print(f"Exception in downloading segment: {e}")
 
-    # Write the collected segments to a file
     with open(path, 'wb') as file:
         file.write(buffer)
 
@@ -84,11 +94,16 @@ def FFMPEG(video,
         start         (int): Where to start the download from. Used for download retries.
     '''
 
-    m3u = video.get_m3u8_by_quality(quality)
+    base_url = video.m3u8_base_url
+    new_segment = video.get_m3u8_by_quality(quality)
+    url_components = base_url.split('/')
+    url_components[-1] = new_segment
+    new_url = '/'.join(url_components)
+    print(new_url)
 
-    # Build the command for FFMPEG
+    # Build the command for FFMPEGss
     FFMPEG_COMMAND = "ffmpeg" + ' -i "{input}" -bsf:a aac_adtstoasc -y -c copy {output}'
-    command = FFMPEG_COMMAND.format(input=m3u, output=path).split()
+    command = FFMPEG_COMMAND.format(input=new_url, output=path).split()
 
     # Removes quotation marks from the url
     command[2] = command[2].strip('"')

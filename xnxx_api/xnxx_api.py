@@ -214,6 +214,11 @@ class Video:
         if downloader == default:
             default(video=self, quality=quality, path=output_path, callback=self.callback)
 
+        elif downloader == threaded:
+            threaded(video=self, quality=quality, path=output_path, callback=self.callback)
+
+        elif downloader == FFMPEG:
+            FFMPEG(video=self, quality=quality, path=output_path, callback=self.callback)
 
 
 class Client:
@@ -224,4 +229,4 @@ class Client:
 
 
 video = Client().get_video("https://www.xnxx.com/video-147v2bd5/fapadoo_4k_-_warum_hat_sie_nicht_mich_stattdessen_gefickt_")
-video.download(downloader=default, quality=Quality.BEST, output_path="./")
+video.download(downloader=FFMPEG, quality=Quality.BEST, output_path="./")
