@@ -4,11 +4,47 @@ import os
 import time
 import requests
 from requests import adapters
-from concurrent.futures import ThreadPoolExecutor as Pool, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from ffmpeg_progress_yield import FfmpegProgress
 from typing import Callable
 
+
 CallbackType = Callable[[int, int], None]
+
+
+def download_segment_threaded(args):
+    url, index, length, callback = args
+    for _ in range(5):  # Retry mechanism
+        try:
+            segment = requests.get(url, timeout=10)
+            if segment.ok:
+                callback(index + 1, length)
+                return segment.content
+        except requests.RequestException as e:
+            print(f"Error downloading segment {index + 1}: {e}")
+    return b''
+
+
+def threaded(video, quality, callback, path, start: int = 0, num_workers: int = 10):
+    segments = list(video.get_segments(quality))[start:]
+    length = len(segments)
+    buffer = bytearray()
+
+    # Using ThreadPoolExecutor to download segments in parallel
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        # Prepare the list of tasks
+        futures = [executor.submit(download_segment_threaded, (url, i, length, callback)) for i, url in enumerate(segments)]
+        for future in as_completed(futures):
+            try:
+                # Collect results as they complete
+                segment_data = future.result()
+                buffer.extend(segment_data)
+            except Exception as e:
+                print(f"Error in downloading segment: {e}")
+
+    # Write the collected segments to a file
+    with open(path, 'wb') as file:
+        file.write(buffer)
 
 
 def default(video, quality, callback, path, start: int = 0):
@@ -19,7 +55,7 @@ def default(video, quality, callback, path, start: int = 0):
     for i, url in enumerate(segments):
         for _ in range(5):
 
-            segment = video.client.call(url, throw=False, timeout=4, silent=True)
+            segment = requests.get(url)
 
             if segment.ok:
                 buffer += segment.content
@@ -29,8 +65,9 @@ def default(video, quality, callback, path, start: int = 0):
     with open(path, 'wb') as file:
         file.write(buffer)
 
-def FFMPEG(video: Video,
-           quality: Quality,
+
+def FFMPEG(video,
+           quality,
            callback: CallbackType,
            path: str,
            start: int = 0) -> None:
@@ -66,53 +103,3 @@ def FFMPEG(video: Video,
             print("Download Successful")
 
 
-def _thread(session, url: str, timeout: int) -> bytes:
-    '''
-    Download a single segment.
-    '''
-
-    return session.get(url, timeout=timeout, silent=True).content
-
-
-def _base_threaded(segments: list[str],
-                   callback: CallbackType,
-                   max_workers: int = 50,
-                   timeout: int = 10,
-                   disable_client_delay: bool = True) -> dict[str, bytes]:
-    '''
-    base thread downloader for threaded backends.
-    '''
-
-    length = len(segments)
-
-    with Pool(max_workers=max_workers) as executor:
-
-        buffer: dict[str, bytes] = {}
-        segments = segments.copy()  # Avoid deleting parsed segments
-
-        while 1:
-            futures = {executor.submit(_thread, client, url, timeout): url
-                       for url in segments}
-
-
-            for future in as_completed(futures):
-
-                url = futures[future]
-                segment_name = consts.re.ffmpeg_line(url)
-
-                segment = future.result()
-                buffer[url] = segment
-
-                # Remove future and call callback
-                segments.remove(url)
-                callback(len(buffer), length)
-
-
-
-            if lns := len(segments):
-                print("Retrying to fetch %s segments", lns)
-                continue
-
-            break
-
-    return buffer

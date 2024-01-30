@@ -2,11 +2,13 @@ try:
     from modules.consts import *
     from modules.locals import *
     from modules.errors import *
+    from modules.download import *
 
 except (ModuleNotFoundError, ImportError):
     from .modules.consts import *
     from .modules.locals import *
     from .modules.errors import *
+    from .modules.download import *
 
 import requests
 import json
@@ -204,6 +206,15 @@ class Video:
     def content_url(self) -> str:
         return self.json_content["contentUrl"]
 
+    def callback(self, pos, total):
+        print(f"Pos: {pos}")
+        print(f"Total: {total}")
+
+    def download(self, downloader, quality, output_path):
+        if downloader == default:
+            default(video=self, quality=quality, path=output_path, callback=self.callback)
+
+
 
 class Client:
 
@@ -213,7 +224,4 @@ class Client:
 
 
 video = Client().get_video("https://www.xnxx.com/video-147v2bd5/fapadoo_4k_-_warum_hat_sie_nicht_mich_stattdessen_gefickt_")
-segments = video.get_segments(quality=Quality.BEST)
-
-for segment in segments:
-    print(segment)
+video.download(downloader=default, quality=Quality.BEST, output_path="./")
