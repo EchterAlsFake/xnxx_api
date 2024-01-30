@@ -1,15 +1,18 @@
 # Thanks to: https://github.com/EchterAlsFake/PHUB/blob/master/src/phub/modules/download.py
+# oh and of course ChatGPT lol
 
-import os
-import time
 import requests
-from requests import adapters
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from ffmpeg_progress_yield import FfmpegProgress
 from typing import Callable
 
 
 CallbackType = Callable[[int, int], None]
+
+"""
+Important: The title of the video isn't applied to the output path. You need to manually append it to 
+the output path. This has good reasons, to make this library more adaptable into other applications.
+"""
 
 
 def download_segment(args, retry_count=5):
@@ -35,7 +38,7 @@ def download_segment(args, retry_count=5):
     return b''
 
 
-def threaded(video, quality, callback, path, start: int = 0, num_workers: int = 10):
+def threaded(video, quality, callback, path, start: int = 0, num_workers: int = 10) -> bool:
     from multiprocessing import Value
 
     segments = list(video.get_segments(quality))[start:]
@@ -56,8 +59,10 @@ def threaded(video, quality, callback, path, start: int = 0, num_workers: int = 
     with open(path, 'wb') as file:
         file.write(buffer)
 
+    return True
 
-def default(video, quality, callback, path, start: int = 0):
+
+def default(video, quality, callback, path, start: int = 0) -> bool:
     buffer = b''
     segments = list(video.get_segments(quality))[start:]
     length = len(segments)
@@ -75,33 +80,22 @@ def default(video, quality, callback, path, start: int = 0):
     with open(path, 'wb') as file:
         file.write(buffer)
 
+    return True
+
 
 def FFMPEG(video,
            quality,
            callback: CallbackType,
            path: str,
-           start: int = 0) -> None:
-    '''
-    Download using FFMPEG with real-time progress reporting.
-    FFMPEG must be installed on your system.
-    You can override FFMPEG access with consts.FFMPEG_COMMAND.
-
-    Args:
-        video       (Video): The video object to download.
-        quality   (Quality): The video quality.
-        callback (Callable): Download progress callback.
-        path          (str): The video download path.
-        start         (int): Where to start the download from. Used for download retries.
-    '''
+           start: int = 0) -> bool:
 
     base_url = video.m3u8_base_url
     new_segment = video.get_m3u8_by_quality(quality)
     url_components = base_url.split('/')
     url_components[-1] = new_segment
     new_url = '/'.join(url_components)
-    print(new_url)
 
-    # Build the command for FFMPEGss
+    # Build the command for FFMPEG
     FFMPEG_COMMAND = "ffmpeg" + ' -i "{input}" -bsf:a aac_adtstoasc -y -c copy {output}'
     command = FFMPEG_COMMAND.format(input=new_url, output=path).split()
 
@@ -115,6 +109,4 @@ def FFMPEG(video,
         callback(int(round(progress)), 100)
 
         if progress == 100:
-            print("Download Successful")
-
-
+            return True

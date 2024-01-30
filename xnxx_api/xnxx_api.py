@@ -3,12 +3,14 @@ try:
     from modules.locals import *
     from modules.errors import *
     from modules.download import *
+    from modules.progress_bars import *
 
 except (ModuleNotFoundError, ImportError):
     from .modules.consts import *
     from .modules.locals import *
     from .modules.errors import *
     from .modules.download import *
+    from .modules.progress_bars import *
 
 import requests
 import json
@@ -207,18 +209,33 @@ class Video:
         return self.json_content["contentUrl"]
 
     def callback(self, pos, total):
-        print(f"Pos: {pos}")
-        print(f"Total: {total}")
+        """
 
-    def download(self, downloader, quality, output_path):
+        :param pos:
+        :param total:
+        :return:
+        """
+
+    def download(self, downloader, quality, output_path, callback=None):
+        """
+        :param downloader:
+        :param quality:
+        :param output_path:
+        :return:
+        """
+
+        if callback is None:
+            callback = Callback.text_progress_bar
+
+
         if downloader == default:
-            default(video=self, quality=quality, path=output_path, callback=self.callback)
+            default(video=self, quality=quality, path=output_path, callback=callback)
 
         elif downloader == threaded:
-            threaded(video=self, quality=quality, path=output_path, callback=self.callback)
+            threaded(video=self, quality=quality, path=output_path, callback=callback)
 
         elif downloader == FFMPEG:
-            FFMPEG(video=self, quality=quality, path=output_path, callback=self.callback)
+            FFMPEG(video=self, quality=quality, path=output_path, callback=callback)
 
 
 class Client:
@@ -227,6 +244,4 @@ class Client:
     def get_video(cls, url):
         return Video(url)
 
-
-video = Client().get_video("https://www.xnxx.com/video-147v2bd5/fapadoo_4k_-_warum_hat_sie_nicht_mich_stattdessen_gefickt_")
-video.download(downloader=FFMPEG, quality=Quality.BEST, output_path="./")
+    # More will follow...
