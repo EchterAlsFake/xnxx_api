@@ -218,6 +218,7 @@ class Video:
 
     def download(self, downloader, quality, output_path, callback=None):
         """
+        :param callback:
         :param downloader:
         :param quality:
         :param output_path:
@@ -226,7 +227,6 @@ class Video:
 
         if callback is None:
             callback = Callback.text_progress_bar
-
 
         if downloader == default:
             default(video=self, quality=quality, path=output_path, callback=callback)
@@ -244,4 +244,3 @@ class Client:
     def get_video(cls, url):
         return Video(url)
 
-    # More will follow...

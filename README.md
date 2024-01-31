@@ -1,4 +1,4 @@
-<h1 align="center">HQPorner API</h1> 
+<h1 align="center">XNXX API</h1> 
 
 <div align="center">
     <a href="https://pepy.tech/project/xnxx_api"><img src="https://static.pepy.tech/badge/xnxx_api" alt="Downloads"></a>
@@ -7,7 +7,7 @@
 
 # Description
  
-xnxx API is an API for xnxx.com. It allows you to fetch information from videos using regexes and requests.
+XNXX API is an API for xnxx.com. It allows you to fetch information from videos using regexes and requests.
 
 # Disclaimer
 
@@ -16,6 +16,7 @@ xnxx API is an API for xnxx.com. It allows you to fetch information from videos 
 Copyright Information: I have no intention of stealing copyright protected content or slowing down
 a website. Contact me at my E-Mail, and I'll take this Repository immediately offline.
 
+> EchterAlsFake@proton.me
 
 # Quickstart
 

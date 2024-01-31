@@ -4,7 +4,8 @@
 > - Author: Johannes Habel
 > - Copryight (C) 2024
 > - License: GPL 3
-> - Dependencies: requests, lxml, bs4, ffmpeg-progress-yield
+> - Dependencies: requests, lxml, bs4, ffmpeg-progress-yield 
+> - Optional dependency: ffmpeg (installed in path)
 
 
 # Important Notice
