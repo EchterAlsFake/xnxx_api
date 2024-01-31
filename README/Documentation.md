@@ -1,6 +1,6 @@
 # XNXX API Documentation
 
-> - Version 1.0
+> - Version 1.1
 > - Author: Johannes Habel
 > - Copryight (C) 2024
 > - License: GPL 3
@@ -134,6 +134,5 @@ There are three quality types:
 - Quality.HALF
 - Quality.WORST
 
-I think they explain themselves really good :)
-
-
+> - You can also pass a string instead of a Quality object. e.g instead of `Quality.BEST`, you can say `best`
+> - Same goes for threading modes. Instead of `download.threaded` you can just say `threaded` as a string

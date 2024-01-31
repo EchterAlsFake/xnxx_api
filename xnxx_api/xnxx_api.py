@@ -104,7 +104,9 @@ class Video:
         self.available_qualities = list(quality_url_map.keys())
         return self.available_qualities
 
-    def get_m3u8_by_quality(self, quality: Quality):
+    def get_m3u8_by_quality(self, quality):
+        quality = self.fix_quality(quality)
+
         self.get_available_qualities()
         base_qualities = ["250p", "360p", "480p", "720p", "1080p"]
         if quality == Quality.BEST:
@@ -118,7 +120,10 @@ class Video:
 
         return self.quality_url_map.get(selected_quality)
 
-    def get_segments(self, quality: Quality):
+    def get_segments(self, quality):
+
+        quality = self.fix_quality(quality)
+
         # Some inspiration from PHUB (xD)
         base_url = self.m3u8_base_url
         new_segment = self.get_m3u8_by_quality(quality)
@@ -216,6 +221,23 @@ class Video:
         :return:
         """
 
+    @classmethod
+    def fix_quality(cls, quality):
+        # Needed for Porn Fetch
+
+        if isinstance(quality, Quality):
+            return quality
+
+        else:
+            if str(quality) == "best":
+                return Quality.BEST
+
+            elif str(quality) == "half":
+                return Quality.HALF
+
+            elif str(quality) == "worst":
+                return Quality.WORST
+
     def download(self, downloader, quality, output_path, callback=None):
         """
         :param callback:
@@ -224,17 +246,18 @@ class Video:
         :param output_path:
         :return:
         """
+        quality = self.fix_quality(quality)
 
         if callback is None:
             callback = Callback.text_progress_bar
 
-        if downloader == default:
+        if downloader == default or str(downloader) == "default":
             default(video=self, quality=quality, path=output_path, callback=callback)
 
-        elif downloader == threaded:
+        elif downloader == threaded or str(downloader) == "threaded":
             threaded(video=self, quality=quality, path=output_path, callback=callback)
 
-        elif downloader == FFMPEG:
+        elif downloader == FFMPEG or str(downloader) == "FFMPEG":
             FFMPEG(video=self, quality=quality, path=output_path, callback=callback)
 
 
@@ -243,4 +266,3 @@ class Client:
     @classmethod
     def get_video(cls, url):
         return Video(url)
-

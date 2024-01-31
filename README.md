@@ -26,7 +26,7 @@ a website. Contact me at my E-Mail, and I'll take this Repository immediately of
 
 
 ```python
-from xnxx_api.xnxx_api import Client, Quality
+from xnxx_api.xnxx_api import Client, Quality, threaded
 # Initialize a Client object
 client = Client()
 
@@ -38,7 +38,7 @@ print(video_object.title)
 print(video_object.likes)
 # Download the video
 
-video_object.download(quality=Quality.BEST, output_path="your_output_path + filename")
+video_object.download(downloader=threaded, quality=Quality.BEST, output_path="your_output_path + filename")
 
 # SEE DOCUMENTATION FOR MORE
 ```
@@ -50,7 +50,7 @@ See [Changelog](https://github.com/EchterAlsFake/xnxx_api/blob/master/README/Cha
 Do you see any issues or having some feature requests? Simply open an Issue or talk
 in the discussions.
 
-Pull requests are also welcome, but please avoid bs4 and use regex :) 
+Pull requests are also welcome.
 
 # License
 Licensed under the LGPLv3 License
