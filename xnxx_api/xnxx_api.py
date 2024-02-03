@@ -28,7 +28,6 @@ class Video:
         self.script_content = None
         self.html_content = None
         self.metadata_matches = None
-        self.rating_metadata = None
         self.json_content = None
         self.session = requests.Session()
 
@@ -39,14 +38,10 @@ class Video:
             self.get_base_html()
             self.get_script_content()
             self.get_metadata_matches()
-            self.get_rating_metadata()
             self.extract_json_from_html()
 
     def get_base_html(self):
         self.html_content = requests.get(self.url).content.decode("utf-8")
-
-    def get_rating_metadata(self):
-        self.rating_metadata = REGEX_VIDEO_RATING.findall(self.html_content)
 
     @classmethod
     def is_desired_script(cls, tag):
@@ -167,15 +162,15 @@ class Video:
 
     @cached_property
     def comment_count(self) -> str:
-        return self.rating_metadata[2]
+        return REGEX_VIDEO_COMMENT_COUNT.search(self.html_content).group(1)
 
     @cached_property
     def likes(self) -> str:
-        return self.rating_metadata[0]
+        return REGEX_VIDEO_LIKES.search(self.html_content).group(1)
 
     @cached_property
     def dislikes(self) -> str:
-        return self.rating_metadata[1]
+        return REGEX_VIDEO_DISLIKES.search(self.html_content).group(1)
 
     @cached_property
     def pornstars(self) -> list:
@@ -212,14 +207,6 @@ class Video:
     @cached_property
     def content_url(self) -> str:
         return self.json_content["contentUrl"]
-
-    def callback(self, pos, total):
-        """
-
-        :param pos:
-        :param total:
-        :return:
-        """
 
     @classmethod
     def fix_quality(cls, quality):
