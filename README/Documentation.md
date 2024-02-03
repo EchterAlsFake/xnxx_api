@@ -1,6 +1,6 @@
 # XNXX API Documentation
 
-> - Version 1.1
+> - Version 1.2
 > - Author: Johannes Habel
 > - Copryight (C) 2024
 > - License: GPL 3
