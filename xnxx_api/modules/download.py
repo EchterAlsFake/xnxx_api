@@ -83,24 +83,22 @@ def default(video, quality, callback, path, start: int = 0) -> bool:
     return True
 
 
-def FFMPEG(video,
-           quality,
-           callback: CallbackType,
-           path: str,
-           start: int = 0) -> bool:
-
+def FFMPEG(video, quality, callback, path, start=0) -> bool:
     base_url = video.m3u8_base_url
     new_segment = video.get_m3u8_by_quality(quality)
     url_components = base_url.split('/')
     url_components[-1] = new_segment
     new_url = '/'.join(url_components)
 
-    # Build the command for FFMPEG
-    FFMPEG_COMMAND = "ffmpeg" + ' -i "{input}" -bsf:a aac_adtstoasc -y -c copy {output}'
-    command = FFMPEG_COMMAND.format(input=new_url, output=path).split()
-
-    # Removes quotation marks from the url
-    command[2] = command[2].strip('"')
+    # Build the command for FFMPEG as a list directly
+    command = [
+        "ffmpeg",
+        "-i", new_url,  # Input URL
+        "-bsf:a", "aac_adtstoasc",
+        "-y",  # Overwrite output files without asking
+        "-c", "copy",  # Copy streams without reencoding
+        path  # Output file path
+    ]
 
     # Initialize FfmpegProgress and execute the command
     ff = FfmpegProgress(command)
@@ -110,3 +108,5 @@ def FFMPEG(video,
 
         if progress == 100:
             return True
+
+    return False
