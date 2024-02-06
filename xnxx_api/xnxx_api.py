@@ -183,14 +183,14 @@ class Video:
         return pornstar_list_filtered
 
     @cached_property
-    def keywords(self) -> list:
-        keyword_list = REGEX_VIDEO_KEYWORDS.findall(self.html_content)
-        keyword_list_filtered = []
-        for keyword in keyword_list:
-            keyword = str(keyword).replace("+", " ")
-            keyword_list_filtered.append(keyword)
+    def tags(self) -> list:
+        tags_list = REGEX_VIDEO_KEYWORDS.findall(self.html_content)
+        tags_list_filtered = []
+        for tag in tags_list:
+            tag = str(tag).replace("+", " ")
+            tags_list_filtered.append(tag)
 
-        return keyword_list_filtered
+        return tags_list_filtered
 
     @cached_property
     def description(self) -> str:

@@ -64,7 +64,7 @@ The video object has the following values:
 | .dislikes        |   int   |      Yes      |
 | .pornstars       |  list   |      Yes      |
 | .description     |   str   |      Yes      |
-| .keywords        |  list   |      Yes      |
+| .tags            |  list   |      Yes      |
 | .thumbnail_url   |  list   |      Yes      |
 | .publish_date    |   str   |      Yes      |
 | .content_url     |   str   |      Yes      |
