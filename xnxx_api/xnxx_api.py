@@ -145,7 +145,7 @@ class Video:
         return html.unescape(REGEX_VIDEO_TITLE.search(self.script_content).group(1))
 
     @cached_property
-    def uploader(self) -> str:
+    def author(self) -> str:
         return REGEX_VIDEO_UPLOADER.search(self.script_content).group(1)
 
     @cached_property
@@ -201,7 +201,7 @@ class Video:
         return self.json_content["thumbnailUrl"]
 
     @cached_property
-    def upload_date(self) -> str:
+    def publish_date(self) -> str:
         return self.json_content["uploadDate"]
 
     @cached_property

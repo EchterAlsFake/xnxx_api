@@ -55,7 +55,7 @@ The video object has the following values:
 | Attribute        | Returns |  is cached?   |
 |:-----------------|:-------:|:-------------:|
 | .title           |   str   |      Yes      |
-| .uploader        |   str   |      Yes      |
+| .author          |   str   |      Yes      |
 | .length          |   str   |      Yes      |
 | .highest_quality |   str   |      Yes      |
 | .views           |   int   |      Yes      |
@@ -66,7 +66,7 @@ The video object has the following values:
 | .description     |   str   |      Yes      |
 | .keywords        |  list   |      Yes      |
 | .thumbnail_url   |  list   |      Yes      |
-| .upload_date     |   str   |      Yes      |
+| .publish_date    |   str   |      Yes      |
 | .content_url     |   str   |      Yes      |
 
 ### Downloading a Video:
