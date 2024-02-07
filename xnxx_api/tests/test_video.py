@@ -1,6 +1,6 @@
 from ..xnxx_api import Video, Quality
 
-url = "https://www.xnxx.com/video-16vi44cb/besorg_dir_jetzt_ein_sex-date_auf_fuckmatch.fun_-_deutsch_fuck"
+url = "https://www.xnxx.com/video-1b9bufc9/die_zierliche_stieftochter_passt_kaum_in_den_mund_ihres_stiefvaters"
 # This will be the URL for all tests
 
 video = Video(url)
@@ -11,9 +11,9 @@ def test_video_title():
     assert isinstance(title, str) and len(title) > 0
 
 
-def test_uploader():
-    uploader = video.uploader
-    assert isinstance(uploader, str) and len(uploader) > 0
+def test_author():
+    author = video.author
+    assert isinstance(author, str) and len(author) > 0
 
 
 def test_length():
@@ -57,8 +57,8 @@ def test_description():
 
 
 def test_keywords():
-    keywords = video.keywords
-    assert isinstance(keywords, list) and len(keywords) > 0
+    tags = video.tags
+    assert isinstance(tags, list) and len(tags) > 0
 
 
 def test_thumbnail_url():
@@ -66,9 +66,9 @@ def test_thumbnail_url():
     assert isinstance(thumbnail_url, list) and len(thumbnail_url) > 0
 
 
-def test_upload_date():
-    upload_date = video.upload_date
-    assert isinstance(upload_date, str) and len(upload_date) > 0
+def test_publish_date():
+    publish_date = video.publish_date
+    assert isinstance(publish_date, str) and len(publish_date) > 0
 
 
 def test_content_url():
@@ -89,4 +89,3 @@ def test_get_segments():
         segment_list.append(segment)
 
     assert len(segment_list) > 10
-
