@@ -5,7 +5,7 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from ffmpeg_progress_yield import FfmpegProgress
 from typing import Callable
-
+from multiprocessing import Value, Lock
 
 CallbackType = Callable[[int, int], None]
 
@@ -16,7 +16,7 @@ the output path. This has good reasons, to make this library more adaptable into
 
 
 def download_segment(args, retry_count=5):
-    url, length, callback, processed_segments = args
+    url, index, length, callback, processed_segments = args
     for attempt in range(retry_count):
         try:
             segment = requests.get(url, timeout=10)
@@ -25,7 +25,7 @@ def download_segment(args, retry_count=5):
                     processed_segments.value += 1
                     current_processed = processed_segments.value
                 callback(current_processed, length)
-                return segment.content
+                return (index, segment.content)
         except ConnectionError as e:
             if 'HTTPSConnectionPool' in str(e) and attempt < retry_count - 1:
                 print(f"Retry {attempt + 1} for segment due to HTTPSConnectionPool error.")
@@ -35,29 +35,40 @@ def download_segment(args, retry_count=5):
         except requests.RequestException as e:
             print(f"Error downloading segment: {e}")
             break  # No retry for other types of errors
-    return b''
 
 
 def threaded(video, quality, callback, path, start: int = 0, num_workers: int = 10) -> bool:
-    from multiprocessing import Value
-
     segments = list(video.get_segments(quality))[start:]
-    length = len(segments)
-    buffer = bytearray()
+    length = len(segments)  # Total number of segments
 
-    processed_segments = Value('i', 0)  # Shared value for counting processed segments
+    # Shared value for counting processed segments and a lock for thread-safe operations
+    processed_segments = Value('i', 0)
+    buffer_lock = Lock()
 
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        futures = [executor.submit(download_segment, (url, length, callback, processed_segments)) for url in segments]
-        for future in as_completed(futures):
+        # Map each future to its corresponding segment index
+        future_to_segment = {
+            executor.submit(download_segment, (url, i, length, callback, processed_segments)): i
+            for i, url in enumerate(segments)
+        }
+
+        for future in as_completed(future_to_segment):
+            segment_index = future_to_segment[future]
             try:
-                segment_data = future.result()
-                buffer.extend(segment_data)
+                _, segment_data = future.result()
+                if segment_data:
+                    with buffer_lock:
+                        # Write the segment data in the correct order
+                        with open(path, 'ab') as file:
+                            file.write(segment_data)
+                with processed_segments.get_lock():
+                    processed_segments.value += 1
+                    # Halve the progress for the purpose of correct display
+                    adjusted_progress = processed_segments.value / 2
+                    progress_percent = (adjusted_progress / length) * 100
+                    callback(adjusted_progress, length)
             except Exception as e:
                 print(f"Exception in downloading segment: {e}")
-
-    with open(path, 'wb') as file:
-        file.write(buffer)
 
     return True
 
