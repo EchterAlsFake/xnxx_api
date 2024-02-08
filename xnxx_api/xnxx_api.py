@@ -242,7 +242,8 @@ class Video:
             default(video=self, quality=quality, path=output_path, callback=callback)
 
         elif downloader == threaded or str(downloader) == "threaded":
-            threaded(video=self, quality=quality, path=output_path, callback=callback)
+            threaded_download = threaded(max_workers=20, timeout=10)
+            threaded_download(video=self, quality=quality, path=output_path, callback=callback)
 
         elif downloader == FFMPEG or str(downloader) == "FFMPEG":
             FFMPEG(video=self, quality=quality, path=output_path, callback=callback)
