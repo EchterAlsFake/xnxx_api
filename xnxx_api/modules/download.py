@@ -33,7 +33,7 @@ def download_segment(url: str, timeout: int, retries: int = 3, backoff_factor: f
     return (url, b'', False)  # Failed download
 
 
-def improved_threaded(max_workers: int = 50, timeout: int = 10, retries: int = 3):
+def threaded(max_workers: int = 50, timeout: int = 10, retries: int = 3):
     """
     Creates a wrapper function for the actual download process, with retry logic.
     """
