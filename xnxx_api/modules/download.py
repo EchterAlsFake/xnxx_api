@@ -33,14 +33,15 @@ def download_segment(url: str, timeout: int, retries: int = 3, backoff_factor: f
     return (url, b'', False)  # Failed download
 
 
-def threaded(max_workers: int = 50, timeout: int = 10, retries: int = 3):
+def threaded(max_workers: int = 20, timeout: int = 10, retries: int = 3):
     """
     Creates a wrapper function for the actual download process, with retry logic.
     """
-    def wrapper(segments, callback, path):
+    def wrapper(video, quality, callback, path):
         """
         Download video segments in parallel, with retries for failures, and write to a file.
         """
+        segments = list(video.get_segments(quality=quality))
         length = len(segments)
         completed, successful_downloads = 0, 0
 
@@ -56,9 +57,7 @@ def threaded(max_workers: int = 50, timeout: int = 10, retries: int = 3):
                         successful_downloads += 1
                     callback(completed, length)  # Update callback regardless of success to reflect progress
                 except Exception as e:
-                    print(f"Unhandled error downloading segment {segment_url}: {e}")
-
-        print(f"Completed downloading {completed} out of {length} segments, with {successful_downloads} successful.")
+                    raise e
 
         # Writing only successful downloads to the file
         with open(path, 'wb') as file:
@@ -71,9 +70,6 @@ def threaded(max_workers: int = 50, timeout: int = 10, retries: int = 3):
                             file.write(data)
                     except:
                         pass  # This block could further handle or log missing data scenarios
-
-        print(f"Successfully wrote file to {path}")
-
     return wrapper
 
 
