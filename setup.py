@@ -5,7 +5,7 @@ setup(
     version="1.2",
     packages=find_packages(),
     install_requires=[
-        "requests", "bs4", "lxml", "ffmpeg-progress-yield"
+        "requests", "bs4", "lxml", "ffmpeg-progress-yield", "eaf_base_api"
     ],
     entry_points={
         'console_scripts': [
