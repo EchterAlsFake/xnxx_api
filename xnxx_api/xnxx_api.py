@@ -1,16 +1,18 @@
 try:
     from modules.consts import *
-    from modules.locals import *
     from modules.errors import *
-    from modules.download import *
-    from modules.progress_bars import *
+    from base_api.base import Core
+    from base_api.modules.download import *
+    from base_api.modules.progress_bars import Callback
+    from base_api.modules.quality import Quality
 
 except (ModuleNotFoundError, ImportError):
     from .modules.consts import *
-    from .modules.locals import *
     from .modules.errors import *
-    from .modules.download import *
-    from .modules.progress_bars import *
+    from base_api.base import Core
+    from base_api.modules.progress_bars import Callback
+    from base_api.modules.download import *
+
 
 import requests
 import json
@@ -41,7 +43,7 @@ class Video:
             self.extract_json_from_html()
 
     def get_base_html(self):
-        self.html_content = requests.get(self.url).content.decode("utf-8")
+        self.html_content = Core.get_content(url=self.url, headers=None, cookies=None, retries=MAX_RETRIES).decode("utf-8")
 
     @classmethod
     def is_desired_script(cls, tag):
@@ -82,46 +84,13 @@ class Video:
     def m3u8_base_url(self):
         return REGEX_VIDEO_M3U8.search(self.script_content).group(1)
 
-    def get_available_qualities(self):
-        response = self.session.get(self.m3u8_base_url)
-        content = response.content.decode("utf-8")
-        lines = content.splitlines()
-
-        quality_url_map = {}
-        base_qualities = ["250p", "360p", "480p", "720p", "1080p"]
-
-        for line in lines:
-            for quality in base_qualities:
-                if f"hls-{quality}" in line:
-                    quality_url_map[quality] = line
-
-        self.quality_url_map = quality_url_map
-        self.available_qualities = list(quality_url_map.keys())
-        return self.available_qualities
-
-    def get_m3u8_by_quality(self, quality):
-        quality = self.fix_quality(quality)
-
-        self.get_available_qualities()
-        base_qualities = ["250p", "360p", "480p", "720p", "1080p"]
-        if quality == Quality.BEST:
-            selected_quality = max(self.available_qualities, key=lambda q: base_qualities.index(q))
-        elif quality == Quality.WORST:
-            selected_quality = min(self.available_qualities, key=lambda q: base_qualities.index(q))
-        elif quality == Quality.HALF:
-            sorted_qualities = sorted(self.available_qualities, key=lambda q: base_qualities.index(q))
-            middle_index = len(sorted_qualities) // 2
-            selected_quality = sorted_qualities[middle_index]
-
-        return self.quality_url_map.get(selected_quality)
-
     def get_segments(self, quality):
 
-        quality = self.fix_quality(quality)
+        quality = Core().fix_quality(quality)
 
         # Some inspiration from PHUB (xD)
         base_url = self.m3u8_base_url
-        new_segment = self.get_m3u8_by_quality(quality)
+        new_segment = Core().get_m3u8_by_quality(quality, m3u8_base_url=base_url)
         # Split the base URL into components
         url_components = base_url.split('/')
 
@@ -135,10 +104,17 @@ class Video:
         urls = [l for l in master_src.splitlines()
                 if l and not l.startswith('#')]
 
+        segments = []
+
         for url in urls:
             url_components[-1] = url
             new_url = '/'.join(url_components)
-            yield new_url
+            segments.append(new_url)
+
+        return segments
+
+    def download(self, quality, output_path, downloader, callback=Callback.text_progress_bar):
+        Core().download(video=self, quality=quality, output_path=output_path, callback=callback, downloader=downloader)
 
     @cached_property
     def title(self) -> str:
@@ -207,46 +183,6 @@ class Video:
     @cached_property
     def content_url(self) -> str:
         return self.json_content["contentUrl"]
-
-    @classmethod
-    def fix_quality(cls, quality):
-        # Needed for Porn Fetch
-
-        if isinstance(quality, Quality):
-            return quality
-
-        else:
-            if str(quality) == "best":
-                return Quality.BEST
-
-            elif str(quality) == "half":
-                return Quality.HALF
-
-            elif str(quality) == "worst":
-                return Quality.WORST
-
-    def download(self, downloader, quality, output_path, callback=None):
-        """
-        :param callback:
-        :param downloader:
-        :param quality:
-        :param output_path:
-        :return:
-        """
-        quality = self.fix_quality(quality)
-
-        if callback is None:
-            callback = Callback.text_progress_bar
-
-        if downloader == default or str(downloader) == "default":
-            default(video=self, quality=quality, path=output_path, callback=callback)
-
-        elif downloader == threaded or str(downloader) == "threaded":
-            threaded_download = threaded(max_workers=20, timeout=10)
-            threaded_download(video=self, quality=quality, path=output_path, callback=callback)
-
-        elif downloader == FFMPEG or str(downloader) == "FFMPEG":
-            FFMPEG(video=self, quality=quality, path=output_path, callback=callback)
 
 
 class Client:

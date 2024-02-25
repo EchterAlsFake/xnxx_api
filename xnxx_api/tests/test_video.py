@@ -1,5 +1,5 @@
-from ..xnxx_api import Video, Quality
-
+from ..xnxx_api import Video
+from base_api.modules.quality import Quality
 url = "https://www.xnxx.com/video-1b9bufc9/die_zierliche_stieftochter_passt_kaum_in_den_mund_ihres_stiefvaters"
 # This will be the URL for all tests
 
@@ -76,16 +76,6 @@ def test_content_url():
     assert isinstance(content_url, str) and len(content_url) > 0
 
 
-def test_quality():
-    quality = video.fix_quality("best")
-    assert isinstance(quality, Quality)
-
-
 def test_get_segments():
-    segments = video.get_segments(quality=Quality.BEST)
-    segment_list = []
-
-    for segment in segments:
-        segment_list.append(segment)
-
-    assert len(segment_list) > 10
+    segments = list(video.get_segments(quality=Quality.BEST))
+    assert len(segments) > 10
