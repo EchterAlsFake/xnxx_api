@@ -195,7 +195,7 @@ class Search:
         self.searching_quality = searching_quality
 
     @classmethod
-    def validate_query(self, query):
+    def validate_query(cls, query):
         return query.replace(" ", "+")
 
     @cached_property
@@ -233,14 +233,30 @@ class Search:
 class User:
     def __init__(self, url):
         self.url = url
-        self.html_content = Core().get_content(self.url, headers=HEADERS)
-        urls = REGEX_SCRAPE_VIDEOS.findall(self.html_content)
-        self.urls = ["https://www.xnxx.com/video-" + url for url in urls]
+
+    @cached_property
+    def html_content(self):
+        # Now this is going to be weird, just don't ask
+        return Core().get_content(f"{self.url}", headers=HEADERS).decode("utf-8")
 
     @cached_property
     def videos(self):
-        for url in self.urls:
-            yield url
+
+        page = 0
+        while True:
+            url = f"{self.url}/videos/best/{page}?from=goldtab"
+            content = Core().get_content(url, headers=HEADERS).decode("utf-8")
+            print(content)
+            urls = REGEX_SCRAPE_VIDEOS.findall(content)
+
+            if not urls:
+                break
+
+            else:
+                for url_ in urls:
+                    yield Video(f"https://www.xnxx.com/video-{url_}")
+
+            page += 1
 
 
 class Client:
@@ -252,3 +268,13 @@ class Client:
     @classmethod
     def search(cls, query, upload_time: UploadTime = "", length: Length = "", searching_quality: SearchingQuality = ""):
         return Search(query, upload_time, length, searching_quality)
+
+    @classmethod
+    def get_user(cls, url):
+        return User(url)
+
+client = Client()
+user = Client.get_user("https://www.xnxx.com/pornstar/abella-danger")
+videos = user.videos
+for video in videos:
+    print(video.title)
