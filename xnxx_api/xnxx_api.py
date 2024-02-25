@@ -1,6 +1,7 @@
 try:
     from modules.consts import *
     from modules.errors import *
+    from modules.search_filters import *
     from base_api.base import Core
     from base_api.modules.download import *
     from base_api.modules.progress_bars import Callback
@@ -9,6 +10,7 @@ try:
 except (ModuleNotFoundError, ImportError):
     from .modules.consts import *
     from .modules.errors import *
+    from .modules.search_filters import *
     from base_api.base import Core
     from base_api.modules.progress_bars import Callback
     from base_api.modules.download import *
@@ -185,8 +187,68 @@ class Video:
         return self.json_content["contentUrl"]
 
 
+class Search:
+    def __init__(self, query: str, upload_time: UploadTime, length: Length, searching_quality: SearchingQuality):
+        self.query = self.validate_query(query)
+        self.upload_time = upload_time
+        self.length = length
+        self.searching_quality = searching_quality
+
+    @classmethod
+    def validate_query(self, query):
+        return query.replace(" ", "+")
+
+    @cached_property
+    def html_content(self):
+        # Now this is going to be weird, just don't ask
+        return Core().get_content(f"https://www.xnxx.com/search{self.upload_time}{self.length}{self.searching_quality}/{self.query}", headers=HEADERS).decode("utf-8")
+
+    @cached_property
+    def total_pages(self):
+        return REGEX_SEARCH_TOTAL_PAGES.search(self.html_content).group(1)
+
+    @cached_property
+    def videos(self):
+
+        page = 0
+        while True:
+
+            if page == 0:
+                url = f"https://www.xnxx.com/search{self.upload_time}{self.length}{self.searching_quality}/{self.query}"
+
+            else:
+                url = f"https://www.xnxx.com/search{self.upload_time}{self.length}{self.searching_quality}/{self.query}/{page}"
+
+            content = Core().get_content(url, headers=HEADERS).decode("utf-8")
+            urls = REGEX_SCRAPE_VIDEOS.findall(content)
+            for url_ in urls:
+                yield Video(f"https://www.xnxx.com/video-{url_}")
+
+            if int(page) >= int(self.total_pages):
+                break
+
+            page += 1
+
+
+class User:
+    def __init__(self, url):
+        self.url = url
+        self.html_content = Core().get_content(self.url, headers=HEADERS)
+        urls = REGEX_SCRAPE_VIDEOS.findall(self.html_content)
+        self.urls = ["https://www.xnxx.com/video-" + url for url in urls]
+
+    @cached_property
+    def videos(self):
+        for url in self.urls:
+            yield url
+
+
 class Client:
 
     @classmethod
     def get_video(cls, url):
         return Video(url)
+
+    @classmethod
+    def search(cls, query, upload_time: UploadTime = "", length: Length = "", searching_quality: SearchingQuality = ""):
+        return Search(query, upload_time, length, searching_quality)

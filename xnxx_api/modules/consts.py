@@ -5,6 +5,10 @@ MAX_RETRIES = 4
 # ROOT URLs
 ROOT_URL = "https://www.xnxx.com/"
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Host": "www.xnxx.com",
+ }
 
 # REGEX
 REGEX_VIDEO_CHECK = re.compile(r"xnxx.com/(.*?)")
@@ -16,3 +20,7 @@ REGEX_VIDEO_COMMENT_COUNT = re.compile(r'<span class="icon comments"></span><spa
 REGEX_VIDEO_PORNSTARS = re.compile(r'<a class="is-pornstar" href="/search/(.*?)">')
 REGEX_VIDEO_KEYWORDS = re.compile(r'<a class="is-keyword" href="/search/(.*?)">')
 REGEX_VIDEO_M3U8 = re.compile(r"html5player\.setVideoHLS\('([^']+)'\);")
+
+REGEX_SCRAPE_VIDEOS = re.compile(r'<div class="thumb"><a href="/video-(.*?)"')
+
+REGEX_SEARCH_TOTAL_PAGES = re.compile(r'class="last-page">(.*?)</a>')
