@@ -1,8 +1,8 @@
 class Length:
-    _0_10min = "/0-10min"
-    _10min_plus = "/10min+"
-    _10_20min = "/10-20min"
-    _20min_plus = "/20min+"
+    X_0_10min = "/0-10min"
+    X_10min_plus = "/10min+"
+    X_10_20min = "/10-20min"
+    X_20min_plus = "/20min+"
 
 
 class UploadTime:
@@ -11,5 +11,5 @@ class UploadTime:
 
 
 class SearchingQuality:
-    _720p = "/hd-only"
-    _1080p_plus = "/fullhd"
+    X_720p = "/hd-only"
+    X_1080p_plus = "/fullhd"

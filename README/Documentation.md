@@ -1,6 +1,6 @@
 # XNXX API Documentation
 
-> - Version 1.2
+> - Version 1.3 (partially)
 > - Author: Johannes Habel
 > - Copryight (C) 2024
 > - License: GPL 3
@@ -8,8 +8,8 @@
 > - Optional dependency: ffmpeg (installed in path)
 
 
-# Important Notice
-The ToS of xnxx.com clearly say, that using scrapers / bots isn't allowed.
+> [!WARNING]
+> The ToS of xnxx.com clearly say, that using scrapers / bots isn't allowed.
 > Using this API is on your risk. I am not liable for your actions!
 
 # Table of Contents
@@ -19,9 +19,11 @@ The ToS of xnxx.com clearly say, that using scrapers / bots isn't allowed.
     - [Attributes](#attributes)
     - [Downloading](#downloading-a-video)
     - [Custom callback](#custom-callback-for-downloading--videos)
-
+- [Searching](#searching)
+- [Model / Users]
 - [Locals](#locals)
   - [Quality](#the-quality-object)
+  - [Searching Filters]
 
 # Importing the API
 
@@ -116,6 +118,26 @@ def custom_callback(pos, total):
 ```
 
 When downloading a video, you can just specify your callback functions in the `callback` argument
+
+# Searching
+```python
+from xnxx_api.xnxx_api import Client
+from xnxx_api.modules.search_filters import UploadTime, SearchingQuality, Length
+
+client = Client()
+search = client.search("<query>", upload_time=UploadTime.month, length=Length.X_0_10min, searching_quality=SearchingQuality.X_720p)
+# this is an example
+
+for video in search.videos:
+  print(video.title)
+  # Iterate like this over results
+```
+
+> [!Important]
+> You can also search using categories with filters. Specify the category name
+> in the query.
+
+
 
 
 # Locals
