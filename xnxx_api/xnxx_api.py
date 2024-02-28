@@ -277,10 +277,3 @@ class Client:
     @classmethod
     def get_user(cls, url):
         return User(url)
-
-
-client = Client()
-user = Client.get_user("https://www.xnxx.com/pornstar/abella-danger")
-videos = user.videos
-for video in videos:
-    print(video.title)
