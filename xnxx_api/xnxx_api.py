@@ -22,7 +22,6 @@ import html
 
 from bs4 import BeautifulSoup
 from functools import cached_property
-from pprint import pprint
 
 
 class Video:
@@ -34,7 +33,6 @@ class Video:
         self.html_content = None
         self.metadata_matches = None
         self.json_content = None
-        self.session = requests.Session()
 
         if not REGEX_VIDEO_CHECK.search(self.url):
             raise InvalidUrl("The video URL is invalid!")
@@ -102,7 +100,7 @@ class Video:
 
         # Rejoin the components into the new full URL
         new_url = '/'.join(url_components)
-        master_src = self.session.get(url=new_url).text
+        master_src = Core().get_content(url=new_url).decode("utf-8")
 
         urls = [l for l in master_src.splitlines()
                 if l and not l.startswith('#')]
