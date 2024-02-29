@@ -254,7 +254,7 @@ class User:
                 url = video.get("u")
                 yield Video(f"https://www.xnxx.com{url}")
 
-            if int(page) >= (self.pages):
+            if int(page) >= int(self.pages):
                 break
 
     @cached_property
