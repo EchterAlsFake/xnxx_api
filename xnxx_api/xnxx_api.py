@@ -22,6 +22,7 @@ import html
 
 from bs4 import BeautifulSoup
 from functools import cached_property
+from pprint import pprint
 
 
 class Video:
@@ -233,30 +234,34 @@ class Search:
 class User:
     def __init__(self, url):
         self.url = url
+        self.pages = round(self.total_videos / 50)
 
     @cached_property
-    def html_content(self):
-        # Now this is going to be weird, just don't ask
-        return Core().get_content(f"{self.url}", headers=HEADERS).decode("utf-8")
+    def base_json(self):
+        url = f"{self.url}/videos/best/0?from=goldtab"
+        content = Core().get_content(url, headers=HEADERS).decode("utf-8")
+        data = html.unescape(json.loads(content))
+        return data
 
     @cached_property
     def videos(self):
-
         page = 0
         while True:
+            page += 1
             url = f"{self.url}/videos/best/{page}?from=goldtab"
             content = Core().get_content(url, headers=HEADERS).decode("utf-8")
-            print(content)
-            urls = REGEX_SCRAPE_VIDEOS.findall(content)
+            data = html.unescape(json.loads(content))
+            videos = data["videos"]
+            for video in videos:
+                url = video.get("u")
+                yield Video(f"https://www.xnxx.com{url}")
 
-            if not urls:
+            if int(page) >= (self.pages):
                 break
 
-            else:
-                for url_ in urls:
-                    yield Video(f"https://www.xnxx.com/video-{url_}")
-
-            page += 1
+    @cached_property
+    def total_videos(self):
+        return self.base_json["nb_videos"]
 
 
 class Client:
@@ -272,9 +277,3 @@ class Client:
     @classmethod
     def get_user(cls, url):
         return User(url)
-
-client = Client()
-user = Client.get_user("https://www.xnxx.com/pornstar/abella-danger")
-videos = user.videos
-for video in videos:
-    print(video.title)
