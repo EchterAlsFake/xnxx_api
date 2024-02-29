@@ -28,7 +28,8 @@ The ToS of xnxx.com clearly say, that using scrapers / bots isn't allowed.
 #### To import all modules you should use the following:
 
 ```python
-from xnxx_api.xnxx_api import Client, Quality
+from base_api.modules.quality import *
+from xnxx_api.xnxx_api import *
 ```
 
 # Initializing the Client
@@ -85,7 +86,7 @@ When downloading a video you can give a `downloader` argument which represents a
 You can import the three downloaders using:
 
 ```python
-from xnxx_api.modules.download import default, threaded, FFMPEG
+from base_api.modules.download import FFMPEG, threaded, default
 from xnxx_api.xnxx_api import Client, Quality
 
 client = Client()
