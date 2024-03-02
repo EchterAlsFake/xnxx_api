@@ -1,7 +1,5 @@
 import re
 
-MAX_RETRIES = 4
-
 # ROOT URLs
 ROOT_URL = "https://www.xnxx.com/"
 

@@ -16,7 +16,6 @@ except (ModuleNotFoundError, ImportError):
     from base_api.modules.download import *
 
 
-import requests
 import json
 import html
 
@@ -44,7 +43,7 @@ class Video:
             self.extract_json_from_html()
 
     def get_base_html(self):
-        self.html_content = Core.get_content(url=self.url, headers=None, cookies=None, retries=MAX_RETRIES).decode("utf-8")
+        self.html_content = Core.get_content(url=self.url, headers=None, cookies=None).decode("utf-8")
 
     @classmethod
     def is_desired_script(cls, tag):
@@ -60,7 +59,7 @@ class Video:
 
         # Use a regex to extract the desired strings
         # This regex looks for patterns of text that could represent the data you're interested in
-        self.metadata_matches = re.findall(r'(\d+min|\d+p|\d[\d\.,]*\s*[views]*)', metadata_text)
+        self.metadata_matches = re.findall(r'(\d+min|\d+p|\d[\d.,]*\s*[views]*)', metadata_text)
 
     def get_script_content(self):
         soup = BeautifulSoup(self.html_content, 'lxml')
