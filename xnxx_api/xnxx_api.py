@@ -2,25 +2,19 @@ try:
     from modules.consts import *
     from modules.errors import *
     from modules.search_filters import *
-    from base_api.base import Core
-    from base_api.modules.download import *
-    from base_api.modules.progress_bars import Callback
-    from base_api.modules.quality import Quality
 
 except (ModuleNotFoundError, ImportError):
     from .modules.consts import *
     from .modules.errors import *
     from .modules.search_filters import *
-    from base_api.base import Core
-    from base_api.modules.progress_bars import Callback
-    from base_api.modules.download import *
-
 
 import json
 import html
 
 from bs4 import BeautifulSoup
 from functools import cached_property
+from base_api.base import Core
+from base_api.modules.progress_bars import Callback
 
 
 class Video:
@@ -58,7 +52,6 @@ class Video:
         metadata_text = metadata_span.get_text(separator=' ', strip=True)
 
         # Use a regex to extract the desired strings
-        # This regex looks for patterns of text that could represent the data you're interested in
         self.metadata_matches = re.findall(r'(\d+min|\d+p|\d[\d.,]*\s*[views]*)', metadata_text)
 
     def get_script_content(self):
@@ -82,35 +75,16 @@ class Video:
 
     @cached_property
     def m3u8_base_url(self):
+        """
+        The m3u8 base URL is a file that contains the list of segments (.ts files) for the different resolutions.
+        This is basically the whole magic for all my APIs :)
+        :return: (str) The m3u8 base URL
+        """
         return REGEX_VIDEO_M3U8.search(self.script_content).group(1)
 
     def get_segments(self, quality):
-
         quality = Core().fix_quality(quality)
-
-        # Some inspiration from PHUB (xD)
-        base_url = self.m3u8_base_url
-        new_segment = Core().get_m3u8_by_quality(quality, m3u8_base_url=base_url)
-        # Split the base URL into components
-        url_components = base_url.split('/')
-
-        # Replace the last component with the new segment
-        url_components[-1] = new_segment
-
-        # Rejoin the components into the new full URL
-        new_url = '/'.join(url_components)
-        master_src = Core().get_content(url=new_url).decode("utf-8")
-
-        urls = [l for l in master_src.splitlines()
-                if l and not l.startswith('#')]
-
-        segments = []
-
-        for url in urls:
-            url_components[-1] = url
-            new_url = '/'.join(url_components)
-            segments.append(new_url)
-
+        segments = Core().get_segments(quality=quality, m3u8_base_url=self.m3u8_base_url)
         return segments
 
     def download(self, quality, output_path, downloader, callback=Callback.text_progress_bar):
@@ -207,7 +181,6 @@ class Search:
 
     @cached_property
     def videos(self):
-
         page = 0
         while True:
 
@@ -265,12 +238,30 @@ class Client:
 
     @classmethod
     def get_video(cls, url):
+        """
+        :param url: (str) The URL of the video
+        :return: (Video) The video object
+        """
         return Video(url)
 
     @classmethod
     def search(cls, query, upload_time: UploadTime = "", length: Length = "", searching_quality: SearchingQuality = ""):
+        """
+        :param query:
+        :param upload_time:
+        :param length:
+        :param searching_quality:
+        :return: (Search) the search object
+        """
         return Search(query, upload_time, length, searching_quality)
 
     @classmethod
     def get_user(cls, url):
+        """
+        :param url: (str) The user URL
+        :return: (User) The User object
+        """
         return User(url)
+
+video = Client().get_video("https://www.xnxx.com/video-122odz11/stiefmutter_es_ist_zeit_fur_dich_sex_mit_einem_echten_madchen_zu_haben_dieses_wichsen_in_deinem_zimmer_wird_es_nicht_reichen_s1_e9")
+video.download("best", "./d.mp4", "threaded")

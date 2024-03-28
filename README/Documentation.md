@@ -2,14 +2,14 @@
 
 > - Version 1.3 (partially)
 > - Author: Johannes Habel
-> - Copryight (C) 2024
-> - License: GPL 3
-> - Dependencies: requests, lxml, bs4, ffmpeg-progress-yield 
-> - Optional dependency: ffmpeg (installed in path)
+> - Copyright (C) 2024
+> - License: LGPLv3
+> - Dependencies: requests, lxml, bs4, ffmpeg-progress-yield, eaf_base_api
+> - Optional dependency: ffmpeg (installed in your path)
 
 
 > [!WARNING]
-> The ToS of xnxx.com clearly say, that using scrapers / bots isn't allowed.
+> The ToS of xnxx.com clearly say that using scrapers / bots isn't allowed.
 > Using this API is on your risk. I am not liable for your actions!
 
 # Table of Contents
@@ -20,14 +20,14 @@
     - [Downloading](#downloading-a-video)
     - [Custom callback](#custom-callback-for-downloading--videos)
 - [Searching](#searching)
-- [Model / Users]
+- [Model / Users](#models--users)
 - [Locals](#locals)
   - [Quality](#the-quality-object)
-  - [Searching Filters]
+  - [Searching Filters](#searching-filters)
 
 # Importing the API
 
-#### To import all modules you should use the following:
+#### To import all modules, you should use the following:
 
 ```python
 from base_api.modules.quality import *
@@ -83,13 +83,14 @@ There are three ways of downloading videos:
 - FFMPEG: Let ffmpeg handle all this for you
 - Threaded: Using multiple workers to fetch the segments (recommended!)
 
-When downloading a video you can give a `downloader` argument which represents a downloader.
+When downloading a video, you can give a `downloader` argument which represents a downloader.
 
 You can import the three downloaders using:
 
 ```python
 from base_api.modules.download import FFMPEG, threaded, default
-from xnxx_api.xnxx_api import Client, Quality
+from base_api.modules.quality import Quality
+from xnxx_api.xnxx_api import Client
 
 client = Client()
 video = client.get_video("...")
@@ -98,14 +99,14 @@ video.download(downloader=threaded, quality=Quality.BEST, output_path="./IdontKn
 # This will save the video in the current working directory with the filename "IdontKnow.mp4"
 ```
 
-### Custom Callback for downloading  videos
+### Custom Callback for downloading videos
 
 You may want to specify a custom callback for downloading videos. Luckily for you, I made it as easy as
 possible :)
 
 1. Create a callback function, which takes `pos` and `total` as arguments.
-2. `pos` represents the current amount of downloaded segments
-3. `total` represents the total amount of segments
+2. `pos` represents the current number of downloaded segments
+3. `total` represents the total number of segments
 
 Here's an example:
 
@@ -135,10 +136,26 @@ for video in search.videos:
 ```
 
 > [!Important]
-> You can also search using categories with filters. Specify the category name
-> in the query.
+> You can also search using categories with filters. Specify the category name in the query.
+
+# Models / Users
+
+```python
+from xnxx_api.xnxx_api import Client
+
+client = Client()
+model = client.get_user("<user_url>") # example: xnxx.com/pornstar/...
+
+videos = model.videos
+
+for video in videos:
+  print(video.title)
+  
+# Total number of videos:
+print(model.total_videos)
 
 
+```
 
 
 # Locals
@@ -148,7 +165,7 @@ for video in search.videos:
 First: Import the Quality object:
 
 ```python
-from xnxx_api.xnxx_api import Quality
+from base_api.modules.quality import Quality
 ```
 
 There are three quality types:
@@ -157,5 +174,26 @@ There are three quality types:
 - Quality.HALF
 - Quality.WORST
 
+> [!IMPORTANT]
 > - You can also pass a string instead of a Quality object. e.g instead of `Quality.BEST`, you can say `best`
-> - Same goes for threading modes. Instead of `download.threaded` you can just say `threaded` as a string
+> - The same goes for threading modes. Instead of `download.threaded` you can just say `threaded` as a string
+
+## Searching Filters
+
+Currently, there are three filters available:
+
+- Searching Quality
+- Upload Time
+- Length
+
+They are located in:
+
+```python
+from xnxx_api.modules.search_filters import UploadTime, SearchingQuality, Length
+from xnxx_api.xnxx_api import Client
+# Use them like this:
+
+search = Client().search("<query>", length=Length.X_0_10min, upload_time=UploadTime.year, searching_quality=SearchingQuality.X_1080p_plus)
+videos = search.videos
+# I think the names explain what it does :)
+```

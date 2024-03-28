@@ -12,11 +12,9 @@ XNXX API is an API for xnxx.com. It allows you to fetch information from videos 
 
 # Disclaimer
 
-[!IMPORTANT] The xxnx API is in violation to xnxx's ToS!
-
-Copyright Information: I have no intention of stealing copyright protected content or slowing down
-a website. Contact me at my E-Mail, and I'll take this Repository immediately offline.
-
+> [!IMPORTANT] 
+> XNXX API is in violation to the ToS of xnxx.com!
+> If you are the website owner of xnxx.com, contact me at my E-Mail, and I'll take this repository immediately offline.
 > EchterAlsFake@proton.me
 
 # Quickstart
@@ -57,9 +55,3 @@ Pull requests are also welcome.
 Licensed under the LGPLv3 License
 
 Copyright (C) 2023–2024 Johannes Habel
-
-# Support
-
-Leave a star on the repository. That's enough :) 
-
-
