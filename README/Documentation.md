@@ -94,7 +94,7 @@ from xnxx_api.xnxx_api import Client
 
 client = Client()
 video = client.get_video("...")
-video.download(downloader=threaded, quality=Quality.BEST, output_path="./IdontKnow.mp4")
+video.download(downloader=threaded, quality=Quality.BEST, path="./IdontKnow.mp4")
                                             # See Locals
 # This will save the video in the current working directory with the filename "IdontKnow.mp4"
 ```

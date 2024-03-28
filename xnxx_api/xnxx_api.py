@@ -87,8 +87,8 @@ class Video:
         segments = Core().get_segments(quality=quality, m3u8_base_url=self.m3u8_base_url)
         return segments
 
-    def download(self, quality, output_path, downloader, callback=Callback.text_progress_bar):
-        Core().download(video=self, quality=quality, output_path=output_path, callback=callback, downloader=downloader)
+    def download(self, quality, path, downloader, callback=Callback.text_progress_bar):
+        Core().download(video=self, quality=quality, path=path, callback=callback, downloader=downloader)
 
     @cached_property
     def title(self) -> str:
@@ -262,6 +262,3 @@ class Client:
         :return: (User) The User object
         """
         return User(url)
-
-video = Client().get_video("https://www.xnxx.com/video-122odz11/stiefmutter_es_ist_zeit_fur_dich_sex_mit_einem_echten_madchen_zu_haben_dieses_wichsen_in_deinem_zimmer_wird_es_nicht_reichen_s1_e9")
-video.download("best", "./d.mp4", "threaded")
