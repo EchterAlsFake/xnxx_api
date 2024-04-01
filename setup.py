@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="xnxx_api",
-    version="1.2",
+    version="1.3",
     packages=find_packages(),
     install_requires=[
         "requests", "bs4", "lxml", "ffmpeg-progress-yield", "eaf_base_api"

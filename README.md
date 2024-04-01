@@ -37,7 +37,7 @@ print(video_object.title)
 print(video_object.likes)
 # Download the video
 
-video_object.download(downloader=threaded, quality=Quality.BEST, output_path="your_output_path + filename")
+video_object.download(downloader=threaded, quality=Quality.BEST, path="your_output_path + filename")
 
 # SEE DOCUMENTATION FOR MORE
 ```
