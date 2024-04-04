@@ -8,7 +8,7 @@ setup(
         "requests", "bs4", "lxml", "ffmpeg-progress-yield", "eaf_base_api"
     ],
     entry_points={
-        'console_scripts': [
+        'console_scripts': ['xnxx_api=xnxx_api.xnxx_api:main'
             # If you want to create any executable scripts
         ],
     },

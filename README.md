@@ -25,7 +25,8 @@ XNXX API is an API for xnxx.com. It allows you to fetch information from videos 
 
 
 ```python
-from xnxx_api.xnxx_api import Client, Quality, threaded
+from xnxx_api.xnxx_api import Client, Quality
+from base_api.modules.download import threaded, default, FFMPEG
 # Initialize a Client object
 client = Client()
 
@@ -41,6 +42,9 @@ video_object.download(downloader=threaded, quality=Quality.BEST, path="your_outp
 
 # SEE DOCUMENTATION FOR MORE
 ```
+
+> [!NOTE]
+> XVideos API can also be used from the command line. Do: xvideos_api -h to see the options
 
 # Changelog
 See [Changelog](https://github.com/EchterAlsFake/xnxx_api/blob/master/README/Changelog.md) for more details.
