@@ -13,7 +13,7 @@ import html
 
 from bs4 import BeautifulSoup
 from functools import cached_property
-from base_api.base import Core
+from base_api.base import Core, Quality
 from base_api.modules.progress_bars import Callback
 
 
