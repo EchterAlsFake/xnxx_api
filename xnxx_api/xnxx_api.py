@@ -267,16 +267,20 @@ class Client:
 
 def main():
     parser = argparse.ArgumentParser(description="API Command Line Interface")
-    parser.add_argument("--download", type=str, help="URL to download from")
-    parser.add_argument("--quality", type=str, help="The video quality (best,half,worst)")
-    parser.add_argument("--file", type=str, help="(Optional) Specify a file with URLs (separated with new lines)")
-    parser.add_argument("--output", type=str, help="The output path (with filename)")
+    parser.add_argument("--download", metavar="URL (str)", type=str, help="URL to download from")
+    parser.add_argument("--quality", metavar="best,half,worst", type=str, help="The video quality (best,half,worst)", required=True)
+    parser.add_argument("--file", metavar="Source to .txt file", type=str, help="(Optional) Specify a file with URLs (separated with new lines)")
+    parser.add_argument("--output", metavar="Output directory", type=str, help="The output path (with filename)", required=True)
+    parser.add_argument("--downloader", type=str, help="The Downloader (threaded,ffmpeg,default)", required=True)
+    parser.add_argument("--use-title", metavar="True,False", type=bool, help="Whether to apply video title automatically to output path or not", required=True)
+
     args = parser.parse_args()
 
     if args.download:
         client = Client()
         video = client.get_video(args.download)
-        video.download(quality=args.quality, path=args.output)
+        path = Core().return_path(args=args, video=video)
+        video.download(quality=args.quality, path=path, downloader=args.downloader)
 
     if args.file:
         videos = []
@@ -289,7 +293,8 @@ def main():
             videos.append(client.get_video(url))
 
         for video in videos:
-            video.download(quality=args.quality, path=args.output)
+            path = Core().return_path(args=args, video=video)
+            video.download(quality=args.quality, path=path, downloader=args.downloader)
 
 
 if __name__ == "__main__":
