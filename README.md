@@ -44,7 +44,7 @@ video_object.download(downloader=threaded, quality=Quality.BEST, path="your_outp
 ```
 
 > [!NOTE]
-> XVideos API can also be used from the command line. Do: xvideos_api -h to see the options
+> XNNX API can also be used from the command line. Do: xnxx_api -h to see the options
 
 # Changelog
 See [Changelog](https://github.com/EchterAlsFake/xnxx_api/blob/master/README/Changelog.md) for more details.
