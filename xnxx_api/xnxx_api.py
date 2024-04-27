@@ -101,7 +101,9 @@ class Video:
 
     @cached_property
     def length(self) -> str:
-        return self.metadata_matches[0]
+        length = self.metadata_matches[0]
+        length = str(length).strip("min")
+        return length
 
     @cached_property
     def highest_quality(self) -> str:
