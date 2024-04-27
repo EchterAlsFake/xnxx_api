@@ -38,7 +38,7 @@ class Video:
             self.extract_json_from_html()
 
     def get_base_html(self):
-        self.html_content = Core.get_content(url=self.url, headers=None, cookies=None).decode("utf-8")
+        self.html_content = Core().get_content(url=self.url, headers=None, cookies=None).decode("utf-8")
 
     @classmethod
     def is_desired_script(cls, tag):
