@@ -39,12 +39,13 @@ class Video:
 
     def get_base_html(self):
         self.html_content = Core().get_content(url=self.url, headers=None, cookies=None).decode("utf-8")
+        print(self.html_content)
 
     @classmethod
     def is_desired_script(cls, tag):
         if tag.name != "script":
             return False
-        script_contents = ['html5player', 'setVideoTitle', 'setVideoUrlLow', 'setVideoUrlHigh']
+        script_contents = ['html5player', 'setVideoTitle', 'setVideoUrlLow']
         return all(content in tag.text for content in script_contents)
 
     def get_metadata_matches(self):
