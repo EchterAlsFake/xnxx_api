@@ -39,7 +39,6 @@ class Video:
 
     def get_base_html(self):
         self.html_content = Core().get_content(url=self.url, headers=None, cookies=None).decode("utf-8")
-        print(self.html_content)
 
     @classmethod
     def is_desired_script(cls, tag):

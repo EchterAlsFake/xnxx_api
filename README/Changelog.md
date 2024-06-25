@@ -14,3 +14,6 @@
 - added model support
 - added searching support
 - updated documentation
+
+# 1.4
+- fixed an issue with video loading
