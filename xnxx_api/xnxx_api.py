@@ -17,6 +17,8 @@ from functools import cached_property
 from base_api.base import Core, Quality
 from base_api.modules.progress_bars import Callback
 
+base_qualities = ["250p", "360p", "480p", "720p", "1080p", "1440p", "2160p"]
+
 
 class Video:
     def __init__(self, url):
@@ -85,7 +87,8 @@ class Video:
 
     def get_segments(self, quality):
         quality = Core().fix_quality(quality)
-        segments = Core().get_segments(quality=quality, m3u8_base_url=self.m3u8_base_url)
+        segments = Core().get_segments(quality=quality, m3u8_base_url=self.m3u8_base_url, base_qualities=base_qualities,
+                                       seperator="-")
         return segments
 
     def download(self, quality, path, downloader, callback=Callback.text_progress_bar):
