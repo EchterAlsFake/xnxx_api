@@ -211,6 +211,7 @@ class User:
     def __init__(self, url):
         self.url = url
         self.pages = round(self.total_videos / 50)
+        self.content = Core().get_content(url).decode("utf-8")
 
     @cached_property
     def base_json(self):
@@ -238,6 +239,10 @@ class User:
     @cached_property
     def total_videos(self):
         return self.base_json["nb_videos"]
+
+    @cached_property
+    def total_video_views(self):
+        return REGEX_MODEL_TOTAL_VIDEO_VIEWS.search(self.content).group(1)
 
 
 class Client:
