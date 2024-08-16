@@ -14,8 +14,7 @@ import argparse
 
 from bs4 import BeautifulSoup
 from functools import cached_property
-from base_api.base import Core, Quality
-from base_api.modules.progress_bars import Callback
+from base_api import Core, Quality, threaded, default, FFMPEG, Callback, setup_api
 
 base_qualities = ["250p", "360p", "480p", "720p", "1080p", "1440p", "2160p"]
 

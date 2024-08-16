@@ -30,8 +30,7 @@
 #### To import all modules, you should use the following:
 
 ```python
-from base_api.modules.quality import *
-from xnxx_api.xnxx_api import *
+from xnxx_api import Client, Quality
 ```
 
 # Initializing the Client
@@ -123,11 +122,12 @@ When downloading a video, you can just specify your callback functions in the `c
 
 # Searching
 ```python
-from xnxx_api.xnxx_api import Client
-from xnxx_api.modules.search_filters import UploadTime, SearchingQuality, Length
+from xnxx_api import Client
+from xnxx_api import search_filters
 
 client = Client()
-search = client.search("<query>", upload_time=UploadTime.month, length=Length.X_0_10min, searching_quality=SearchingQuality.X_720p)
+search = client.search("<query>", upload_time=search_filters.UploadTime.month, length=search_filters.Length.X_0_10min, 
+                       searching_quality=search_filters.SearchingQuality.X_720p)
 # this is an example
 
 for video in search.videos:
@@ -189,11 +189,11 @@ Currently, there are three filters available:
 They are located in:
 
 ```python
-from xnxx_api.modules.search_filters import UploadTime, SearchingQuality, Length
+from xnxx_api import search_filters
 from xnxx_api.xnxx_api import Client
 # Use them like this:
 
-search = Client().search("<query>", length=Length.X_0_10min, upload_time=UploadTime.year, searching_quality=SearchingQuality.X_1080p_plus)
+search = Client().search("<query>", length=search_filters.Length.X_0_10min, upload_time=search_filters.UploadTime.year, searching_quality=search_filters.SearchingQuality.X_1080p_plus)
 videos = search.videos
 # I think the names explain what it does :)
 ```

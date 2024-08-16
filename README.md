@@ -25,8 +25,7 @@ XNXX API is an API for xnxx.com. It allows you to fetch information from videos 
 
 
 ```python
-from xnxx_api.xnxx_api import Client, Quality
-from base_api.modules.download import threaded, default, FFMPEG
+from xnxx_api import Client, Quality, threaded, default, FFMPEG
 # Initialize a Client object
 client = Client()
 
