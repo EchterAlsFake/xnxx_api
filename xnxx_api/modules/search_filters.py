@@ -13,3 +13,8 @@ class UploadTime:
 class SearchingQuality:
     X_720p = "/hd-only"
     X_1080p_plus = "/fullhd"
+
+class Mode:
+    default = ""
+    hits = "/hits"
+    random = "/random"

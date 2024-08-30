@@ -1,6 +1,8 @@
+from re import search
+
 # XNXX API Documentation
 
-> - Version 1.4
+> - Version 1.4.1
 > - Author: Johannes Habel
 > - Copyright (C) 2024
 > - License: LGPLv3
@@ -127,7 +129,7 @@ from xnxx_api import search_filters
 
 client = Client()
 search = client.search("<query>", upload_time=search_filters.UploadTime.month, length=search_filters.Length.X_0_10min, 
-                       searching_quality=search_filters.SearchingQuality.X_720p)
+                       searching_quality=search_filters.SearchingQuality.X_720p, mode=search_filters.Mode.default)
 # this is an example
 
 for video in search.videos:
@@ -185,6 +187,7 @@ Currently, there are three filters available:
 - Searching Quality
 - Upload Time
 - Length
+- Mode
 
 They are located in:
 
@@ -193,7 +196,8 @@ from xnxx_api import search_filters
 from xnxx_api.xnxx_api import Client
 # Use them like this:
 
-search = Client().search("<query>", length=search_filters.Length.X_0_10min, upload_time=search_filters.UploadTime.year, searching_quality=search_filters.SearchingQuality.X_1080p_plus)
+search = Client().search("<query>", length=search_filters.Length.X_0_10min, upload_time=search_filters.UploadTime.year,
+                         searching_quality=search_filters.SearchingQuality.X_1080p_plus, mode=search_filters.Mode.default)
 videos = search.videos
 # I think the names explain what it does :)
 ```

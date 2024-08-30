@@ -17,3 +17,6 @@
 
 # 1.4
 - fixed an issue with video loading
+
+# 1.4.1
+- added support for mode searching #2
