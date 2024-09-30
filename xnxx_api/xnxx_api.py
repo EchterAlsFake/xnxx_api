@@ -11,6 +11,7 @@ except (ModuleNotFoundError, ImportError):
 import json
 import html
 import argparse
+import os
 
 from bs4 import BeautifulSoup
 from functools import cached_property
@@ -90,7 +91,10 @@ class Video:
                                        seperator="-")
         return segments
 
-    def download(self, quality, path, downloader, callback=Callback.text_progress_bar):
+    def download(self, quality, path, downloader, callback=Callback.text_progress_bar, no_title=False):
+        if no_title is False:
+            path = f"{path}{os.sep}{self.title}.mp4"
+
         Core().download(video=self, quality=quality, path=path, callback=callback, downloader=downloader)
 
     @cached_property
