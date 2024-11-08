@@ -1,3 +1,5 @@
+from lxml.xsltext import extension
+
 try:
     from modules.consts import *
     from modules.errors import *
@@ -93,7 +95,7 @@ class Video:
 
     def download(self, quality, path, downloader, callback=Callback.text_progress_bar, no_title=False):
         if no_title is False:
-            path = f"{path}{os.sep}{self.title}.mp4"
+            path = os.path.join(path, self.title + ".mp4")
 
         Core().download(video=self, quality=quality, path=path, callback=callback, downloader=downloader)
 

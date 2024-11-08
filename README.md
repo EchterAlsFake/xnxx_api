@@ -19,7 +19,7 @@ XNXX API is an API for xnxx.com. It allows you to fetch information from videos 
 
 # Quickstart
 
-### Have a look at the [Documentation](https://github.com/EchterAlsFake/xnxx_api/blob/master/README/Documentation.md) for more details
+### Have a look at the [Documentation](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/XNXX.md) for more details
 
 - Install the library with `pip install xnxx_api`
 
