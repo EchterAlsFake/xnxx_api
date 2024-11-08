@@ -223,7 +223,7 @@ class User:
     def base_json(self):
         url = f"{self.url}/videos/best/0?from=goldtab"
         content = Core().get_content(url, headers=HEADERS).decode("utf-8")
-        data = html.unescape(json.loads(content))
+        data = json.loads(html.unescape(content))
         return data
 
     @cached_property
@@ -233,7 +233,7 @@ class User:
             page += 1
             url = f"{self.url}/videos/best/{page}?from=goldtab"
             content = Core().get_content(url, headers=HEADERS).decode("utf-8")
-            data = html.unescape(json.loads(content))
+            data = json.loads(html.unescape(content))
             videos = data["videos"]
             for video in videos:
                 url = video.get("u")
