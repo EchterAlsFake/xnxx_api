@@ -1,5 +1,3 @@
-from lxml.xsltext import extension
-
 try:
     from modules.consts import *
     from modules.errors import *
