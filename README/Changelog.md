@@ -21,7 +21,7 @@
 # 1.4.1
 - added support for mode searching #2
 
-# 1.4.0
+# 1.5.0
 - proxy support (See Documentation)
 - updated to eaf_base_api v2
 - written tests for search and user objects
