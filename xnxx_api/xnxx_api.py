@@ -94,7 +94,6 @@ class Video:
         return REGEX_VIDEO_M3U8.search(self.script_content).group(1)
 
     def get_segments(self, quality: str) -> list:
-        print(f"Getting segments for: {self.m3u8_base_url}")
         return core.get_segments(quality=quality, m3u8_url_master=self.m3u8_base_url)
 
     def download(self, quality: str, downloader: str, path: str = "./", callback=Callback.text_progress_bar,
