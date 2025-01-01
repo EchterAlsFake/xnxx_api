@@ -1,5 +1,4 @@
 from ..xnxx_api import Video
-from base_api.modules.quality import Quality
 url = "https://www.xnxx.com/video-1b9bufc9/die_zierliche_stieftochter_passt_kaum_in_den_mund_ihres_stiefvaters"
 # This will be the URL for all tests
 
@@ -77,5 +76,8 @@ def test_content_url():
 
 
 def test_get_segments():
-    segments = list(video.get_segments(quality=Quality.BEST))
+    segments = list(video.get_segments(quality="best"))
     assert len(segments) > 10
+
+def test_download_low():
+    assert video.download(quality="worst", downloader="threaded") is True

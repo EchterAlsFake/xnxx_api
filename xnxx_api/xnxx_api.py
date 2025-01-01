@@ -8,23 +8,31 @@ except (ModuleNotFoundError, ImportError):
     from .modules.errors import *
     from .modules.search_filters import *
 
-import json
-import html
-import argparse
 import os
+import html
+import json
+import logging
+import argparse
+import traceback
 
+from typing import Union, Generator
 from bs4 import BeautifulSoup
 from functools import cached_property
-from base_api import Core, Quality, threaded, default, FFMPEG, Callback, setup_api
+from base_api import BaseCore, Callback
 
-base_qualities = ["250p", "360p", "480p", "720p", "1080p", "1440p", "2160p"]
+core = BaseCore()
+logging.basicConfig(format='%(name)s %(levelname)s %(asctime)s %(message)s', datefmt='%I:%M:%S %p')
+logger = logging.getLogger("XNXX API")
+logger.setLevel(logging.DEBUG)
+
+def disable_logging() -> None:
+    logger.setLevel(logging.CRITICAL)
 
 
 class Video:
     def __init__(self, url):
         self.url = url
         self.available_m3u8_urls = None
-        self.available_qualities = None
         self.script_content = None
         self.html_content = None
         self.metadata_matches = None
@@ -39,8 +47,8 @@ class Video:
             self.get_metadata_matches()
             self.extract_json_from_html()
 
-    def get_base_html(self):
-        self.html_content = Core().get_content(url=self.url, headers=None, cookies=None).decode("utf-8")
+    def get_base_html(self) -> None:
+        self.html_content = core.fetch(url=self.url)
 
     @classmethod
     def is_desired_script(cls, tag):
@@ -49,7 +57,7 @@ class Video:
         script_contents = ['html5player', 'setVideoTitle', 'setVideoUrlLow']
         return all(content in tag.text for content in script_contents)
 
-    def get_metadata_matches(self):
+    def get_metadata_matches(self) -> None:
         soup = BeautifulSoup(self.html_content, 'html.parser')
         metadata_span = soup.find('span', class_='metadata')
         metadata_text = metadata_span.get_text(separator=' ', strip=True)
@@ -57,7 +65,7 @@ class Video:
         # Use a regex to extract the desired strings
         self.metadata_matches = re.findall(r'(\d+min|\d+p|\d[\d.,]*\s*[views]*)', metadata_text)
 
-    def get_script_content(self):
+    def get_script_content(self) -> None:
         soup = BeautifulSoup(self.html_content, 'lxml')
         target_script = soup.find(self.is_desired_script)
         if target_script:
@@ -66,7 +74,7 @@ class Video:
         else:
             raise InvalidResponse("Couldn't extract JSON from HTML")
 
-    def extract_json_from_html(self):
+    def extract_json_from_html(self) -> None:
         soup = BeautifulSoup(self.html_content, 'lxml')
         # Find the <script> tag with type="application/ld+json"
         script_tag = soup.find('script', {'type': 'application/ld+json'})
@@ -77,7 +85,7 @@ class Video:
             self.json_content = data
 
     @cached_property
-    def m3u8_base_url(self):
+    def m3u8_base_url(self) -> str:
         """
         The m3u8 base URL is a file that contains the list of segments (.ts files) for the different resolutions.
         This is basically the whole magic for all my APIs :)
@@ -85,17 +93,24 @@ class Video:
         """
         return REGEX_VIDEO_M3U8.search(self.script_content).group(1)
 
-    def get_segments(self, quality):
-        quality = Core().fix_quality(quality)
-        segments = Core().get_segments(quality=quality, m3u8_base_url=self.m3u8_base_url, base_qualities=base_qualities,
-                                       seperator="-")
-        return segments
+    def get_segments(self, quality: str) -> list:
+        print(f"Getting segments for: {self.m3u8_base_url}")
+        return core.get_segments(quality=quality, m3u8_url_master=self.m3u8_base_url)
 
-    def download(self, quality, path, downloader, callback=Callback.text_progress_bar, no_title=False):
+    def download(self, quality: str, downloader: str, path: str = "./", callback=Callback.text_progress_bar,
+                 no_title: bool = False) -> bool:
+
         if no_title is False:
             path = os.path.join(path, self.title + ".mp4")
 
-        Core().download(video=self, quality=quality, path=path, callback=callback, downloader=downloader)
+        try:
+            core.download(video=self, quality=quality, path=path, callback=callback, downloader=downloader)
+            return True
+
+        except Exception:
+            error = traceback.format_exc()
+            logger.error(error)
+            return False
 
     @cached_property
     def title(self) -> str:
@@ -169,8 +184,8 @@ class Video:
 
 
 class Search:
-    def __init__(self, query: str, upload_time: UploadTime, length: Length, searching_quality: SearchingQuality,
-                 mode: Mode):
+    def __init__(self, query: str, upload_time: Union[str, UploadTime], length: Union[str, Length], searching_quality:
+                                                Union[str, SearchingQuality], mode: Union[str, Mode]):
 
         self.query = self.validate_query(query)
         self.upload_time = upload_time
@@ -183,16 +198,16 @@ class Search:
         return query.replace(" ", "+")
 
     @cached_property
-    def html_content(self):
+    def html_content(self) -> str:
         # Now this is going to be weird, just don't ask
-        return Core().get_content(f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}", headers=HEADERS).decode("utf-8")
+        return core.fetch(f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}")
 
     @cached_property
-    def total_pages(self):
+    def total_pages(self) -> str:
         return REGEX_SEARCH_TOTAL_PAGES.search(self.html_content).group(1)
 
     @cached_property
-    def videos(self):
+    def videos(self) -> Generator[Video, None, None]:
         page = 0
         while True:
 
@@ -202,7 +217,7 @@ class Search:
             else:
                 url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}/{page}"
 
-            content = Core().get_content(url, headers=HEADERS).decode("utf-8")
+            content = core.fetch(url)
             urls = REGEX_SCRAPE_VIDEOS.findall(content)
             for url_ in urls:
                 yield Video(f"https://www.xnxx.com/video-{url_}")
@@ -214,25 +229,25 @@ class Search:
 
 
 class User:
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.url = url
-        self.pages = round(self.total_videos / 50)
-        self.content = Core().get_content(url).decode("utf-8")
+        self.pages = round(int(self.total_videos) / 50)
+        self.content = core.fetch(url)
 
     @cached_property
     def base_json(self):
         url = f"{self.url}/videos/best/0?from=goldtab"
-        content = Core().get_content(url, headers=HEADERS).decode("utf-8")
+        content = core.fetch(url)
         data = json.loads(html.unescape(content))
         return data
 
     @cached_property
-    def videos(self):
+    def videos(self) -> Generator[Video, None, None]:
         page = 0
         while True:
             page += 1
             url = f"{self.url}/videos/best/{page}?from=goldtab"
-            content = Core().get_content(url, headers=HEADERS).decode("utf-8")
+            content = core.fetch(url)
             data = json.loads(html.unescape(content))
             videos = data["videos"]
             for video in videos:
@@ -243,18 +258,18 @@ class User:
                 break
 
     @cached_property
-    def total_videos(self):
+    def total_videos(self) -> int:
         return self.base_json["nb_videos"]
 
     @cached_property
-    def total_video_views(self):
+    def total_video_views(self) -> str:
         return REGEX_MODEL_TOTAL_VIDEO_VIEWS.search(self.content).group(1)
 
 
 class Client:
 
     @classmethod
-    def get_video(cls, url):
+    def get_video(cls, url) -> Video:
         """
         :param url: (str) The URL of the video
         :return: (Video) The video object
@@ -262,8 +277,8 @@ class Client:
         return Video(url)
 
     @classmethod
-    def search(cls, query, upload_time: UploadTime = "", length: Length = "", searching_quality: SearchingQuality = "",
-               mode: Mode = ""):
+    def search(cls, query: str, upload_time: Union[str, UploadTime] = "", length: Union[str, Length] = "",
+               searching_quality: Union[str, SearchingQuality] = "", mode: Union[str, Mode] = "") -> Search:
         """
         :param query:
         :param upload_time:
@@ -275,7 +290,7 @@ class Client:
         return Search(query, upload_time, length, searching_quality, mode)
 
     @classmethod
-    def get_user(cls, url):
+    def get_user(cls, url: str) -> User:
         """
         :param url: (str) The user URL
         :return: (User) The User object
@@ -297,7 +312,7 @@ def main():
     if args.download:
         client = Client()
         video = client.get_video(args.download)
-        path = Core().return_path(args=args, video=video)
+        path = core.return_path(args=args, video=video)
         video.download(quality=args.quality, path=path, downloader=args.downloader)
 
     if args.file:
@@ -311,7 +326,7 @@ def main():
             videos.append(client.get_video(url))
 
         for video in videos:
-            path = Core().return_path(args=args, video=video)
+            path = core.return_path(args=args, video=video)
             video.download(quality=args.quality, path=path, downloader=args.downloader)
 
 
