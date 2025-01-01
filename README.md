@@ -17,6 +17,9 @@ XNXX API is an API for xnxx.com. It allows you to fetch information from videos 
 > If you are the website owner of xnxx.com, contact me at my E-Mail, and I'll take this repository immediately offline.
 > EchterAlsFake@proton.me
 
+> [!NOTE]
+> API is working, although tests are failing for some weird reason.
+
 # Quickstart
 
 ### Have a look at the [Documentation](https://github.com/EchterAlsFake/API_Docs/blob/master/Porn_APIs/XNXX.md) for more details
