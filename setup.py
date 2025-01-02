@@ -2,11 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="xnxx_api",
-    version="1.5.0",
+    version="1.5.1",
     packages=find_packages(),
-    install_requires=[
-        "requests", "bs4", "lxml", "ffmpeg-progress-yield", "eaf_base_api"
-    ],
+    install_requires=["bs4", "eaf_base_api"],
     entry_points={
         'console_scripts': ['xnxx_api=xnxx_api.xnxx_api:main'
             # If you want to create any executable scripts
