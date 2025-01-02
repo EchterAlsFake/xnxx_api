@@ -1,0 +1,2 @@
+[console_scripts]
+xnxx_api = xnxx_api.xnxx_api:main
