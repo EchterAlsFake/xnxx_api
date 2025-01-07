@@ -27,3 +27,9 @@
 - written tests for search and user objects
 - removed headers, cuz they were broken
 - type hinting
+
+# 1.5.1
+- I don't remember
+
+# 1.5.2
+- async support

@@ -1,7 +1,14 @@
 name: XNXX API test
 
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   push:
+    branches:
+      - master
+      - async
   pull_request:
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at 00:00 UTC
@@ -20,7 +27,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest requests ffmpeg-progress-yield bs4 lxml git+https://github.com/EchterAlsFake/eaf_base_api
+        pip install pytest pytest-asyncio
+        pip install .
     - name: Test with pytest
       run: |
         pytest

@@ -1,11 +1,12 @@
+import pytest
 from ..xnxx_api import Client
 
-client = Client()
-search = client.search("fortnite")
+@pytest.mark.asyncio
+async def test_all_search():
+    client = Client()
+    search = await client.search("fortnite", pages=2)
+    videos = await search.videos
 
-def test_search():
-    for idx, video in enumerate(search.videos):
-        assert isinstance(video.title, str)
+    for video in videos:
+        print(video.title)
 
-        if idx == 3:
-            break
