@@ -1,4 +1,4 @@
-name: XNXX API test
+name: Async API test
 
 permissions:
   contents: read
