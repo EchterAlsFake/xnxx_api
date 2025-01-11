@@ -66,7 +66,7 @@ class Video:
         self.metadata_matches = re.findall(r'(\d+min|\d+p|\d[\d.,]*\s*[views]*)', metadata_text)
 
     def get_script_content(self) -> None:
-        soup = BeautifulSoup(self.html_content)
+        soup = BeautifulSoup(self.html_content, "html.parser")
         target_script = soup.find(self.is_desired_script)
         if target_script:
             self.script_content = target_script.text
@@ -75,7 +75,7 @@ class Video:
             raise InvalidResponse("Couldn't extract JSON from HTML")
 
     def extract_json_from_html(self) -> None:
-        soup = BeautifulSoup(self.html_content)
+        soup = BeautifulSoup(self.html_content, "html.parser")
         # Find the <script> tag with type="application/ld+json"
         script_tag = soup.find('script', {'type': 'application/ld+json'})
 
