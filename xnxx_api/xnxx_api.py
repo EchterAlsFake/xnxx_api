@@ -307,7 +307,7 @@ def main():
     parser.add_argument("--no-title", metavar="True,False", type=str, help="Whether to apply video title automatically to output path or not", required=True)
 
     args = parser.parse_args()
-    no_title = args.no_title
+    no_title = BaseCore().str_to_bool(args.no_title)
 
     if args.download:
         client = Client()
