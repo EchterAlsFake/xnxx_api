@@ -25,6 +25,11 @@ logging.basicConfig(format='%(name)s %(levelname)s %(asctime)s %(message)s', dat
 logger = logging.getLogger("XNXX API")
 logger.setLevel(logging.DEBUG)
 
+def refresh_core(): # Needed for Porn Fetch
+    global core
+    core = BaseCore()
+
+
 def disable_logging() -> None:
     logger.setLevel(logging.CRITICAL)
 
