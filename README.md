@@ -58,7 +58,7 @@ However, if you find my work useful, please consider donating something. A tiny 
 means a lot to me.
 
 Paypal: https://paypal.me/EchterAlsFake
-<br>XMR (Monero): `46xL2reuanxZgFxXBBaoagiEJK9c7bL7aiwKNR15neyX2wUsX2QVzkeRMVG2Cro44qLUNYvsP1BQa12KPbNat2ML41nyEeq`
+<br>XMR (Monero): `42XwGZYbSxpMvhn9eeP4DwMwZV91tQgAm3UQr6Zwb2wzBf5HcuZCHrsVxa4aV2jhP4gLHsWWELxSoNjfnkt4rMfDDwXy9jR`
 
 
 # Contribution
