@@ -19,19 +19,15 @@ from typing import Union, Generator
 from bs4 import BeautifulSoup
 from functools import cached_property
 from base_api import BaseCore, Callback
+from base_api.base import setup_logger
+
 
 core = BaseCore()
-logging.basicConfig(format='%(name)s %(levelname)s %(asctime)s %(message)s', datefmt='%I:%M:%S %p')
-logger = logging.getLogger("XNXX API")
-logger.setLevel(logging.DEBUG)
+
 
 def refresh_core(): # Needed for Porn Fetch
     global core
     core = BaseCore()
-
-
-def disable_logging() -> None:
-    logger.setLevel(logging.CRITICAL)
 
 
 class Video:
@@ -42,6 +38,7 @@ class Video:
         self.html_content = None
         self.metadata_matches = None
         self.json_content = None
+        self.logger = setup_logger(name="XNXX API - [Video]", log_file=None, level=logging.CRITICAL)
 
         if not REGEX_VIDEO_CHECK.search(self.url):
             raise InvalidUrl("The video URL is invalid!")
@@ -51,6 +48,10 @@ class Video:
             self.get_script_content()
             self.get_metadata_matches()
             self.extract_json_from_html()
+
+    def enable_logging(self, log_file, level):
+        self.logger = setup_logger(name="XNXX API - [Video]", log_file=log_file, level=level)
+
 
     def get_base_html(self) -> None:
         self.html_content = core.fetch(url=self.url)
@@ -65,7 +66,7 @@ class Video:
     def get_metadata_matches(self) -> None:
         soup = BeautifulSoup(self.html_content, 'html.parser')
         metadata_span = soup.find('span', class_='metadata')
-        metadata_text = metadata_span.get_text(separator=' ', strip=True)
+        metadata_text = metadata_span.get_text()
 
         # Use a regex to extract the desired strings
         self.metadata_matches = re.findall(r'(\d+min|\d+p|\d[\d.,]*\s*[views]*)', metadata_text)
@@ -113,7 +114,7 @@ class Video:
 
         except Exception:
             error = traceback.format_exc()
-            logger.error(error)
+            self.logger.error(error)
             return False
 
     @cached_property
@@ -196,6 +197,10 @@ class Search:
         self.length = length
         self.searching_quality = searching_quality
         self.mode = mode
+        self.logger = setup_logger(name="XNXX API - [Search]", log_file=None, level=logging.CRITICAL)
+
+    def enable_logging(self, log_file, level):
+        self.logger = setup_logger(name="XNXX API - [Search]", log_file=log_file, level=level)
 
     @classmethod
     def validate_query(cls, query):
@@ -237,6 +242,10 @@ class User:
         self.url = url
         self.pages = round(int(self.total_videos) / 50)
         self.content = core.fetch(url)
+        self.logger = setup_logger(name="XNXX API - [User]", log_file=None, level=logging.CRITICAL)
+
+    def enable_logging(self, file, level):
+        self.logger = setup_logger(name="XNXX API - [User]", log_file=file, level=level)
 
     @cached_property
     def base_json(self):
@@ -250,6 +259,7 @@ class User:
         page = 0
         while True:
             page += 1
+            self.logger.info(f"Iterating for page: {page}")
             url = f"{self.url}/videos/best/{page}?from=goldtab"
             content = core.fetch(url)
             data = json.loads(html.unescape(content))
