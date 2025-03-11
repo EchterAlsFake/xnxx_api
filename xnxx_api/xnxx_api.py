@@ -25,9 +25,12 @@ from base_api.base import setup_logger
 core = BaseCore()
 
 
-def refresh_core(): # Needed for Porn Fetch
+def refresh_core(log_file: str, level, enable_logging=False): # Needed for Porn Fetch
     global core
     core = BaseCore()
+    if enable_logging:
+        core.enable_logging(log_file=log_file, level=level)
+
 
 
 class Video:
