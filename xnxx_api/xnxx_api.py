@@ -197,7 +197,7 @@ class Search:
         query: str,
         upload_time: Union[str, UploadTime],
         length: Union[str, Length],
-        limit_max: Union[str, int],
+        limit_max: int,
         searching_quality: Union[str, SearchingQuality],
         mode: Union[str, Mode]
     ):
@@ -297,7 +297,7 @@ class Client:
         query: str,
         upload_time: Union[str, UploadTime] = "",
         length: Union[str, Length] = "",
-        limit_max: Union[str, int] = 0,
+        limit_max: int = 5,
         searching_quality: Union[str, SearchingQuality] = "",
         mode: Union[str, Mode] = ""
     ) -> Search:
