@@ -192,12 +192,20 @@ class Video:
 
 
 class Search:
-    def __init__(self, query: str, upload_time: Union[str, UploadTime], length: Union[str, Length], searching_quality:
-                                                Union[str, SearchingQuality], mode: Union[str, Mode]):
+    def __init__(
+        self,
+        query: str,
+        upload_time: Union[str, UploadTime],
+        length: Union[str, Length],
+        limit_max: Union[str, int],
+        searching_quality: Union[str, SearchingQuality],
+        mode: Union[str, Mode]
+    ):
 
         self.query = self.validate_query(query)
         self.upload_time = upload_time
         self.length = length
+        self.limit_max = limit_max
         self.searching_quality = searching_quality
         self.mode = mode
         self.logger = setup_logger(name="XNXX API - [Search]", log_file=None, level=logging.CRITICAL)
@@ -220,24 +228,14 @@ class Search:
 
     @cached_property
     def videos(self) -> Generator[Video, None, None]:
-        page = 0
-        while True:
-
-            if page == 0:
-                url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}"
-
-            else:
-                url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}/{page}"
-
-            content = core.fetch(url)
-            urls = REGEX_SCRAPE_VIDEOS.findall(content)
-            for url_ in urls:
-                yield Video(f"https://www.xnxx.com/video-{url_}")
-
-            if int(page) >= int(self.total_pages):
-                break
-
-            page += 1
+        if limit_max == 0:
+            url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}"
+        else:
+            url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}/{self.limit_max}"
+        content = core.fetch(url)
+        urls = REGEX_SCRAPE_VIDEOS.findall(content)
+        for url_ in urls:
+            yield Video(f"https://www.xnxx.com/video-{url_}")
 
 
 class User:
@@ -294,17 +292,25 @@ class Client:
         return Video(url)
 
     @classmethod
-    def search(cls, query: str, upload_time: Union[str, UploadTime] = "", length: Union[str, Length] = "",
-               searching_quality: Union[str, SearchingQuality] = "", mode: Union[str, Mode] = "") -> Search:
+    def search(
+        cls,
+        query: str,
+        upload_time: Union[str, UploadTime] = "",
+        length: Union[str, Length] = "",
+        limit_max: Union[str, int] = 0,
+        searching_quality: Union[str, SearchingQuality] = "",
+        mode: Union[str, Mode] = ""
+    ) -> Search:
         """
         :param query:
         :param upload_time:
         :param length:
+        :param limit_max:
         :param searching_quality:
         :param mode:
         :return: (Search) the search object
         """
-        return Search(query, upload_time, length, searching_quality, mode)
+        return Search(query, upload_time, length, limit_max, searching_quality, mode)
 
     @classmethod
     def get_user(cls, url: str) -> User:
