@@ -228,7 +228,7 @@ class Search:
 
     @cached_property
     def videos(self) -> Generator[Video, None, None]:
-        if limit_max == 0:
+        if self.limit_max == 0:
             url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}"
         else:
             url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}/{self.limit_max}"
