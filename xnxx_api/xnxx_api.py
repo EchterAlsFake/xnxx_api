@@ -20,14 +20,16 @@ from bs4 import BeautifulSoup
 from functools import cached_property
 from base_api import BaseCore, Callback
 from base_api.base import setup_logger
-
+from base_api.modules import config
 
 core = BaseCore()
 
 
-def refresh_core(enable_logging=False, log_file: str = None, level = None): # Needed for Porn Fetch
+def refresh_core(custom_config=None, enable_logging=False, log_file: str = None, level = None): # Needed for Porn Fetch
     global core
-    core = BaseCore()
+    cfg = custom_config or config
+    core = BaseCore(cfg)
+
     if enable_logging:
         core.enable_logging(log_file=log_file, level=level)
 
