@@ -1,9 +1,8 @@
-from ..xnxx_api import Video
+from ..xnxx_api import Client
 url = "https://www.xnxx.com/video-1b9bufc9/die_zierliche_stieftochter_passt_kaum_in_den_mund_ihres_stiefvaters"
 # This will be the URL for all tests
 
-video = Video(url)
-
+video = Client().get_video(url)
 
 def test_video_title():
     title = video.title

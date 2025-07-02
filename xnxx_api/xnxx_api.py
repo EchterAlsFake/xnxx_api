@@ -22,22 +22,11 @@ from base_api import BaseCore, Callback
 from base_api.base import setup_logger
 from base_api.modules import config
 
-core = BaseCore()
-
-
-def refresh_core(custom_config=None, enable_logging=False, log_file: str = None, level = None): # Needed for Porn Fetch
-    global core
-    cfg = custom_config or config
-    core = BaseCore(cfg)
-
-    if enable_logging:
-        core.enable_logging(log_file=log_file, level=level)
-
-
 
 class Video:
-    def __init__(self, url):
+    def __init__(self, url, core=None):
         self.url = url
+        self.core = core
         self.available_m3u8_urls = None
         self.script_content = None
         self.html_content = None
@@ -59,7 +48,7 @@ class Video:
 
 
     def get_base_html(self) -> None:
-        self.html_content = core.fetch(url=self.url)
+        self.html_content = self.core.fetch(url=self.url)
 
     @classmethod
     def is_desired_script(cls, tag):
@@ -105,7 +94,7 @@ class Video:
         return REGEX_VIDEO_M3U8.search(self.script_content).group(1)
 
     def get_segments(self, quality: str) -> list:
-        return core.get_segments(quality=quality, m3u8_url_master=self.m3u8_base_url)
+        return self.core.get_segments(quality=quality, m3u8_url_master=self.m3u8_base_url)
 
     def download(self, quality: str, downloader: str, path: str = "./", callback=Callback.text_progress_bar,
                  no_title: bool = False) -> bool:
@@ -114,7 +103,7 @@ class Video:
             path = os.path.join(path, f"{self.title}.mp4")
 
         try:
-            core.download(video=self, quality=quality, path=path, callback=callback, downloader=downloader)
+            self.core.download(video=self, quality=quality, path=path, callback=callback, downloader=downloader)
             return True
 
         except Exception:
@@ -194,9 +183,10 @@ class Video:
 
 
 class Search:
-    def __init__(self, query: str, upload_time: Union[str, UploadTime], length: Union[str, Length], searching_quality:
+    def __init__(self, query: str, core, upload_time: Union[str, UploadTime], length: Union[str, Length], searching_quality:
                                                 Union[str, SearchingQuality], mode: Union[str, Mode]):
 
+        self.core = core
         self.query = self.validate_query(query)
         self.upload_time = upload_time
         self.length = length
@@ -214,7 +204,7 @@ class Search:
     @cached_property
     def html_content(self) -> str:
         # Now this is going to be weird, just don't ask
-        return core.fetch(f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}")
+        return self.core.fetch(f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}")
 
     @cached_property
     def total_pages(self) -> str:
@@ -231,10 +221,10 @@ class Search:
             else:
                 url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}/{page}"
 
-            content = core.fetch(url)
+            content = self.core.fetch(url)
             urls = REGEX_SCRAPE_VIDEOS.findall(content)
             for url_ in urls:
-                yield Video(f"https://www.xnxx.com/video-{url_}")
+                yield Video(f"https://www.xnxx.com/video-{url_}", core=self.core)
 
             if int(page) >= int(self.total_pages):
                 break
@@ -243,10 +233,11 @@ class Search:
 
 
 class User:
-    def __init__(self, url: str):
+    def __init__(self, url: str, core):
         self.url = url
+        self.core = core
         self.pages = round(int(self.total_videos) / 50)
-        self.content = core.fetch(url)
+        self.content = self.core.fetch(url)
         self.logger = setup_logger(name="XNXX API - [User]", log_file=None, level=logging.CRITICAL)
 
     def enable_logging(self, file, level):
@@ -255,7 +246,7 @@ class User:
     @cached_property
     def base_json(self):
         url = f"{self.url}/videos/best/0?from=goldtab"
-        content = core.fetch(url)
+        content = self.core.fetch(url)
         data = json.loads(html.unescape(content))
         return data
 
@@ -266,12 +257,12 @@ class User:
             page += 1
             self.logger.info(f"Iterating for page: {page}")
             url = f"{self.url}/videos/best/{page}?from=goldtab"
-            content = core.fetch(url)
+            content = self.core.fetch(url)
             data = json.loads(html.unescape(content))
             videos = data["videos"]
             for video in videos:
                 url = video.get("u")
-                yield Video(f"https://www.xnxx.com{url}")
+                yield Video(f"https://www.xnxx.com{url}", core=self.core)
 
             if int(page) >= int(self.pages):
                 break
@@ -286,17 +277,17 @@ class User:
 
 
 class Client:
+    def __init__(self, core=None):
+        self.core = core or BaseCore()
 
-    @classmethod
-    def get_video(cls, url) -> Video:
+    def get_video(self, url) -> Video:
         """
         :param url: (str) The URL of the video
         :return: (Video) The video object
         """
-        return Video(url)
+        return Video(url, core=self.core)
 
-    @classmethod
-    def search(cls, query: str, upload_time: Union[str, UploadTime] = "", length: Union[str, Length] = "",
+    def search(self, query: str, upload_time: Union[str, UploadTime] = "", length: Union[str, Length] = "",
                searching_quality: Union[str, SearchingQuality] = "", mode: Union[str, Mode] = "") -> Search:
         """
         :param query:
@@ -306,15 +297,15 @@ class Client:
         :param mode:
         :return: (Search) the search object
         """
-        return Search(query, upload_time, length, searching_quality, mode)
+        return Search(query=query, core=self.core, upload_time=upload_time, length=length,
+        searching_quality=searching_quality, mode=mode)
 
-    @classmethod
-    def get_user(cls, url: str) -> User:
+    def get_user(self, url: str) -> User:
         """
         :param url: (str) The user URL
         :return: (User) The User object
         """
-        return User(url)
+        return User(url, core=self.core)
 
 
 def main():
