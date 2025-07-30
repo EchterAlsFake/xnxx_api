@@ -15,16 +15,15 @@ import logging
 import argparse
 import traceback
 
-from typing import Union, Generator
+from typing import Union, Generator, Optional
 from bs4 import BeautifulSoup
 from functools import cached_property
 from base_api import BaseCore, Callback
 from base_api.base import setup_logger
-from base_api.modules import config
 
 
 class Video:
-    def __init__(self, url, core=None):
+    def __init__(self, url, core: Optional[BaseCore] = None):
         self.url = url
         self.core = core
         self.available_m3u8_urls = None
@@ -97,17 +96,22 @@ class Video:
         return self.core.get_segments(quality=quality, m3u8_url_master=self.m3u8_base_url)
 
     def download(self, quality: str, downloader: str, path: str = "./", callback=Callback.text_progress_bar,
-                 no_title: bool = False) -> bool:
+                 no_title: bool = False, remux: bool = False, callback_remux = None) -> bool:
 
         if no_title is False:
             path = os.path.join(path, f"{self.title}.mp4")
+        print("Zrying tod vqoneg")
 
         try:
-            self.core.download(video=self, quality=quality, path=path, callback=callback, downloader=downloader)
+            print("e")
+            self.core.download(video=self, quality=quality, path=path, callback=callback, downloader=downloader, remux=remux,
+                               callback_remux=callback_remux)
+            print("d")
             return True
 
         except Exception:
             error = traceback.format_exc()
+            print(error)
             self.logger.error(error)
             return False
 
@@ -186,7 +190,7 @@ class Search:
     def __init__(self, query: str, core, upload_time: Union[str, UploadTime], length: Union[str, Length], searching_quality:
                                                 Union[str, SearchingQuality], mode: Union[str, Mode]):
 
-        self.core = core
+        self.core: BaseCore = core
         self.query = self.validate_query(query)
         self.upload_time = upload_time
         self.length = length
@@ -235,7 +239,7 @@ class Search:
 class User:
     def __init__(self, url: str, core):
         self.url = url
-        self.core = core
+        self.core: BaseCore = core
         self.pages = round(int(self.total_videos) / 50)
         self.content = self.core.fetch(url)
         self.logger = setup_logger(name="XNXX API - [User]", log_file=None, level=logging.CRITICAL)
@@ -278,7 +282,7 @@ class User:
 
 class Client:
     def __init__(self, core=None):
-        self.core = core or BaseCore()
+        self.core: BaseCore = core or BaseCore()
 
     def get_video(self, url) -> Video:
         """

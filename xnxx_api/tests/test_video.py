@@ -80,3 +80,4 @@ def test_get_segments():
 
 def test_download_low():
     assert video.download(quality="worst", downloader="threaded") is True
+    assert video.download(quality="worst", downloader="threaded", remux=True) is True
