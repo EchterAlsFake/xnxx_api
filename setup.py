@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="xnxx_api",
-    version="1.5.6",
+    version="1.5.7",
     packages=find_packages(),
     install_requires=["bs4", "eaf_base_api"],
     extras_require={

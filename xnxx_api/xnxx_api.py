@@ -258,7 +258,6 @@ class User:
     def videos(self) -> Generator[Video, None, None]:
         page = 0
         while True:
-            page += 1
             self.logger.info(f"Iterating for page: {page}")
             url = f"{self.url}/videos/best/{page}?from=goldtab"
             content = self.core.fetch(url)
@@ -270,6 +269,7 @@ class User:
 
             if int(page) >= int(self.pages):
                 break
+            page += 1
 
     @cached_property
     def total_videos(self) -> int:
