@@ -100,18 +100,14 @@ class Video:
 
         if no_title is False:
             path = os.path.join(path, f"{self.title}.mp4")
-        print("Zrying tod vqoneg")
 
         try:
-            print("e")
             self.core.download(video=self, quality=quality, path=path, callback=callback, downloader=downloader, remux=remux,
                                callback_remux=callback_remux)
-            print("d")
             return True
 
         except Exception:
             error = traceback.format_exc()
-            print(error)
             self.logger.error(error)
             return False
 
@@ -135,7 +131,13 @@ class Video:
 
     @cached_property
     def views(self) -> str:
-        return self.metadata_matches[2]
+        try:
+            views = self.metadata_matches[2]
+
+        except IndexError:
+            views = self.metadata_matches[1]
+
+        return views
 
     @cached_property
     def comment_count(self) -> str:
@@ -187,10 +189,10 @@ class Video:
 
 
 class Search:
-    def __init__(self, query: str, core, upload_time: Union[str, UploadTime], length: Union[str, Length], searching_quality:
+    def __init__(self, query: str, core: Optional[BaseCore], upload_time: Union[str, UploadTime], length: Union[str, Length], searching_quality:
                                                 Union[str, SearchingQuality], mode: Union[str, Mode]):
 
-        self.core: BaseCore = core
+        self.core = core
         self.query = self.validate_query(query)
         self.upload_time = upload_time
         self.length = length
@@ -237,9 +239,9 @@ class Search:
 
 
 class User:
-    def __init__(self, url: str, core):
+    def __init__(self, url: str, core: Optional[BaseCore]):
         self.url = url
-        self.core: BaseCore = core
+        self.core = core
         self.pages = round(int(self.total_videos) / 50)
         self.content = self.core.fetch(url)
         self.logger = setup_logger(name="XNXX API - [User]", log_file=None, level=logging.CRITICAL)
@@ -281,8 +283,8 @@ class User:
 
 
 class Client:
-    def __init__(self, core=None):
-        self.core: BaseCore = core or BaseCore()
+    def __init__(self, core: Optional[BaseCore] = None):
+        self.core = core or BaseCore()
 
     def get_video(self, url) -> Video:
         """
