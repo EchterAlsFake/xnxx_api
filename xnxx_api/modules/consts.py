@@ -19,3 +19,7 @@ REGEX_SCRAPE_VIDEOS = re.compile(r'<div class="thumb"><a href="/video-(.*?)"')
 REGEX_SEARCH_TOTAL_PAGES = re.compile(r'class="last-page">(.*?)</a>')
 REGEX_MODEL_TOTAL_PAGES = re.compile(r'<a class="last-page" data-page="(.*?)">')
 REGEX_MODEL_TOTAL_VIDEO_VIEWS = re.compile(r'<span class="icon-f icf-eye"></span> (.*?) video views')
+
+headers = {
+    "Referer": "https://www.xnxx.com/"
+}

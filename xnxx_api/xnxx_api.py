@@ -15,11 +15,11 @@ import logging
 import argparse
 import traceback
 
-from typing import Union, Generator, Optional
 from bs4 import BeautifulSoup
 from functools import cached_property
-from base_api import BaseCore, Callback
-from base_api.base import setup_logger
+from typing import Union, Generator, Optional
+from base_api.modules.config import RuntimeConfig
+from base_api.base import BaseCore, Callback, setup_logger
 
 
 class Video:
@@ -284,7 +284,11 @@ class User:
 
 class Client:
     def __init__(self, core: Optional[BaseCore] = None):
-        self.core = core or BaseCore()
+        self.core = core or BaseCore(config=RuntimeConfig())
+        if self.core.session is None:
+            self.core.initialize_session()
+
+        self.core.session.headers = headers
 
     def get_video(self, url) -> Video:
         """
