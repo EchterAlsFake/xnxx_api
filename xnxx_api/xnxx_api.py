@@ -42,8 +42,8 @@ class Video:
             self.get_metadata_matches()
             self.extract_json_from_html()
 
-    def enable_logging(self, log_file, level):
-        self.logger = setup_logger(name="XNXX API - [Video]", log_file=log_file, level=level)
+    def enable_logging(self, log_file, level, log_ip: str = None, log_port: int = None):
+        self.logger = setup_logger(name="XNXX API - [Video]", log_file=log_file, level=level, http_ip=log_ip, http_port=log_port)
 
 
     def get_base_html(self) -> None:
@@ -200,8 +200,8 @@ class Search:
         self.mode = mode
         self.logger = setup_logger(name="XNXX API - [Search]", log_file=None, level=logging.CRITICAL)
 
-    def enable_logging(self, log_file, level):
-        self.logger = setup_logger(name="XNXX API - [Search]", log_file=log_file, level=level)
+    def enable_logging(self, log_file, level, log_ip: str = None, log_port: int = None):
+        self.logger = setup_logger(name="XNXX API - [Search]", log_file=log_file, level=level, http_ip=log_ip, http_port=log_port)
 
     @classmethod
     def validate_query(cls, query):
@@ -246,8 +246,8 @@ class User:
         self.content = self.core.fetch(url)
         self.logger = setup_logger(name="XNXX API - [User]", log_file=None, level=logging.CRITICAL)
 
-    def enable_logging(self, file, level):
-        self.logger = setup_logger(name="XNXX API - [User]", log_file=file, level=level)
+    def enable_logging(self, file, level, log_ip: str = None, log_port: int = None):
+        self.logger = setup_logger(name="XNXX API - [User]", log_file=file, level=level, http_ip=log_ip, http_port=log_port)
 
     @cached_property
     def base_json(self):
@@ -285,10 +285,7 @@ class User:
 class Client:
     def __init__(self, core: Optional[BaseCore] = None):
         self.core = core or BaseCore(config=RuntimeConfig())
-        if self.core.session is None:
-            self.core.initialize_session()
-
-        self.core.session.headers = headers
+        self.core.initialize_session(headers)
 
     def get_video(self, url) -> Video:
         """
