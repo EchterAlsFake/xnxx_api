@@ -11,7 +11,7 @@ def test_video_views():
     assert user.total_videos > 0
 
 def test_videos():
-    for idx, video in enumerate(user.videos):
+    for idx, video in enumerate(user.videos()):
         if idx == 3:
             break
         for object in objects_video:

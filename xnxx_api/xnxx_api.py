@@ -1,3 +1,5 @@
+from charset_normalizer import from_fp
+
 try:
     from modules.consts import *
     from modules.errors import *
@@ -15,11 +17,76 @@ import logging
 import argparse
 import traceback
 
+from httpx import Response
 from bs4 import BeautifulSoup
 from functools import cached_property
 from typing import Union, Generator, Optional
 from base_api.modules.config import RuntimeConfig
 from base_api.base import BaseCore, Callback, setup_logger
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+
+class ErrorVideo:
+    """Drop-in-ish stand-in that raises when accessed."""
+    def __init__(self, url: str, err: Exception):
+        self.url = url
+        self._err = err
+
+    def __getattr__(self, _):
+        # Any attribute access surfaces the original error
+        raise self._err
+
+
+class Helper:
+    def __init__(self, core: BaseCore):
+        self.core = core
+        self.url = None
+
+    def _get_video(self, url: str):
+        return Video(url, core=self.core)
+
+    def _make_video_safe(self, url: str):
+        try:
+            return Video(url, core=self.core)
+        except Exception as e:
+            return ErrorVideo(url, e)
+
+
+    def build_url(self, base_url: str, is_user: bool, is_goldtab: bool, page: int):
+        if is_user:
+            base_url = f"{base_url}/videos/best/{page}"
+
+        if is_goldtab:
+            base_url = f"{base_url}?from_goldtab"
+
+        else:
+            base_url = f"{base_url}/{page}"
+
+        return base_url
+
+    def iterator(self, max_workers: int = 20, pages: int = 0, from_goldtab=False, user=False,
+                 extractor_function = None):
+        if pages == 0:
+            pages = 99
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for page in range(pages):
+                url = self.build_url(base_url=self.url, is_user=user, is_goldtab=from_goldtab, page=page)
+
+                print(f"Fetching: {url}")
+                content = self.core.fetch(url)
+
+                if isinstance(content, Response):
+                    return
+
+                video_urls = extractor_function(content=content)
+
+                if video_urls is False:
+                    return
+
+                futures = [executor.submit(self._make_video_safe, url) for url in video_urls]
+                for future in as_completed(futures):
+                    yield future.result()
 
 
 class Video:
@@ -45,9 +112,10 @@ class Video:
     def enable_logging(self, log_file, level, log_ip: str = None, log_port: int = None):
         self.logger = setup_logger(name="XNXX API - [Video]", log_file=log_file, level=level, http_ip=log_ip, http_port=log_port)
 
-
     def get_base_html(self) -> None:
         self.html_content = self.core.fetch(url=self.url)
+        if isinstance(self.html_content, Response):
+            raise RegionBlocked(f"The Video: {self.url} is not available in your country!")
 
     @classmethod
     def is_desired_script(cls, tag):
@@ -188,9 +256,10 @@ class Video:
         return self.json_content["contentUrl"]
 
 
-class Search:
+class Search(Helper):
     def __init__(self, query: str, core: Optional[BaseCore], upload_time: Union[str, UploadTime], length: Union[str, Length], searching_quality:
                                                 Union[str, SearchingQuality], mode: Union[str, Mode]):
+        super().__init__(core)
 
         self.core = core
         self.query = self.validate_query(query)
@@ -216,33 +285,25 @@ class Search:
     def total_pages(self) -> str:
         return REGEX_SEARCH_TOTAL_PAGES.search(self.html_content).group(1)
 
-    @cached_property
-    def videos(self) -> Generator[Video, None, None]:
-        page = 0
-        while True:
-
-            if page == 0:
-                url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}"
-
-            else:
-                url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}/{page}"
-
-            content = self.core.fetch(url)
+    def videos(self, max_workers: int = 20, pages: int = 0) -> Generator[Video, None, None]:
+        def _extractor(content):
             urls = REGEX_SCRAPE_VIDEOS.findall(content)
+            video_urls = []
             for url_ in urls:
-                yield Video(f"https://www.xnxx.com/video-{url_}", core=self.core)
+                if not "THUMBNUM" in url_:
+                    video_urls.append(f"https://www.xnxx.com/video-{url_}")
 
-            if int(page) >= int(self.total_pages):
-                break
+            return video_urls
 
-            page += 1
+        self.url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}"
+        yield from self.iterator(max_workers=max_workers, pages=pages, extractor_function=_extractor)
 
 
-class User:
+class User(Helper):
     def __init__(self, url: str, core: Optional[BaseCore]):
+        super().__init__(core)
         self.url = url
         self.core = core
-        self.pages = round(int(self.total_videos) / 50)
         self.content = self.core.fetch(url)
         self.logger = setup_logger(name="XNXX API - [User]", log_file=None, level=logging.CRITICAL)
 
@@ -256,22 +317,22 @@ class User:
         data = json.loads(html.unescape(content))
         return data
 
-    @cached_property
-    def videos(self) -> Generator[Video, None, None]:
-        page = 0
-        while True:
-            self.logger.info(f"Iterating for page: {page}")
-            url = f"{self.url}/videos/best/{page}?from=goldtab"
-            content = self.core.fetch(url)
+    def videos(self, max_workers: int = 20, pages: int = 0) -> Generator[Video, None, None]:
+        def _extractor(content):
             data = json.loads(html.unescape(content))
-            videos = data["videos"]
-            for video in videos:
-                url = video.get("u")
-                yield Video(f"https://www.xnxx.com{url}", core=self.core)
 
-            if int(page) >= int(self.pages):
-                break
-            page += 1
+            if data["code"] == 404:
+                return False
+
+            videos = data["videos"]
+            video_urls = []
+            for video in videos:
+                video_urls.append(f"https://xnxx.com{video.get('u')}")
+
+            return video_urls
+
+        yield from self.iterator(max_workers=max_workers, pages=pages, from_goldtab=True, extractor_function=_extractor,
+                                 user=True)
 
     @cached_property
     def total_videos(self) -> int:
