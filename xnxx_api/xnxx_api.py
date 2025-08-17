@@ -1,5 +1,3 @@
-from charset_normalizer import from_fp
-
 try:
     from modules.consts import *
     from modules.errors import *
