@@ -20,71 +20,7 @@ from bs4 import BeautifulSoup
 from functools import cached_property
 from typing import Union, Generator, Optional
 from base_api.modules.config import RuntimeConfig
-from base_api.base import BaseCore, Callback, setup_logger
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
-
-class ErrorVideo:
-    """Drop-in-ish stand-in that raises when accessed."""
-    def __init__(self, url: str, err: Exception):
-        self.url = url
-        self._err = err
-
-    def __getattr__(self, _):
-        # Any attribute access surfaces the original error
-        raise self._err
-
-
-class Helper:
-    def __init__(self, core: BaseCore):
-        self.core = core
-        self.url = None
-
-    def _get_video(self, url: str):
-        return Video(url, core=self.core)
-
-    def _make_video_safe(self, url: str):
-        try:
-            return Video(url, core=self.core)
-        except Exception as e:
-            return ErrorVideo(url, e)
-
-
-    def build_url(self, base_url: str, is_user: bool, is_goldtab: bool, page: int):
-        if is_user:
-            base_url = f"{base_url}/videos/best/{page}"
-
-        if is_goldtab:
-            base_url = f"{base_url}?from_goldtab"
-
-        else:
-            base_url = f"{base_url}/{page}"
-
-        return base_url
-
-    def iterator(self, max_workers: int = 20, pages: int = 0, from_goldtab=False, user=False,
-                 extractor_function = None):
-        if pages == 0:
-            pages = 99
-
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            for page in range(pages):
-                url = self.build_url(base_url=self.url, is_user=user, is_goldtab=from_goldtab, page=page)
-
-                print(f"Fetching: {url}")
-                content = self.core.fetch(url)
-
-                if isinstance(content, Response):
-                    return
-
-                video_urls = extractor_function(content=content)
-
-                if video_urls is False:
-                    return
-
-                futures = [executor.submit(self._make_video_safe, url) for url in video_urls]
-                for future in as_completed(futures):
-                    yield future.result()
+from base_api.base import BaseCore, Callback, setup_logger, Helper
 
 
 class Video:
@@ -123,7 +59,7 @@ class Video:
         return all(content in tag.text for content in script_contents)
 
     def get_metadata_matches(self) -> None:
-        soup = BeautifulSoup(self.html_content, 'html.parser')
+        soup = BeautifulSoup(self.html_content, 'lxml')
         metadata_span = soup.find('span', class_='metadata')
         metadata_text = metadata_span.get_text()
 
@@ -131,7 +67,7 @@ class Video:
         self.metadata_matches = re.findall(r'(\d+min|\d+p|\d[\d.,]*\s*[views]*)', metadata_text)
 
     def get_script_content(self) -> None:
-        soup = BeautifulSoup(self.html_content, "html.parser")
+        soup = BeautifulSoup(self.html_content, "lxml")
         target_script = soup.find(self.is_desired_script)
         if target_script:
             self.script_content = target_script.text
@@ -140,7 +76,7 @@ class Video:
             raise InvalidResponse("Couldn't extract JSON from HTML")
 
     def extract_json_from_html(self) -> None:
-        soup = BeautifulSoup(self.html_content, "html.parser")
+        soup = BeautifulSoup(self.html_content, "lxml")
         # Find the <script> tag with type="application/ld+json"
         script_tag = soup.find('script', {'type': 'application/ld+json'})
 
@@ -257,7 +193,7 @@ class Video:
 class Search(Helper):
     def __init__(self, query: str, core: Optional[BaseCore], upload_time: Union[str, UploadTime], length: Union[str, Length], searching_quality:
                                                 Union[str, SearchingQuality], mode: Union[str, Mode]):
-        super().__init__(core)
+        super().__init__(core, video=Video)
 
         self.core = core
         self.query = self.validate_query(query)
@@ -283,23 +219,23 @@ class Search(Helper):
     def total_pages(self) -> str:
         return REGEX_SEARCH_TOTAL_PAGES.search(self.html_content).group(1)
 
-    def videos(self, max_workers: int = 20, pages: int = 0) -> Generator[Video, None, None]:
-        def _extractor(content):
-            urls = REGEX_SCRAPE_VIDEOS.findall(content)
-            video_urls = []
-            for url_ in urls:
-                if not "THUMBNUM" in url_:
-                    video_urls.append(f"https://www.xnxx.com/video-{url_}")
-
-            return video_urls
-
+    def videos(self, pages_concurrency: int = 2, videos_concurrency: int = 5,  pages: int = 0) -> Generator[Video, None, None]:
         self.url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}"
-        yield from self.iterator(max_workers=max_workers, pages=pages, extractor_function=_extractor)
+
+        if pages >= int(self.total_pages):
+            self.logger.warning(f"You want to fetch: {pages}, but only: {self.total_pages} are available. Reducing!")
+            pages = int(self.total_pages)
+
+        page_urls = [self.url]
+        page_urls.extend([f"{self.url}/{page}" for page in range(1, int(pages))])
+
+        yield from self.iterator(page_urls=page_urls, videos_concurrency=videos_concurrency,
+                                 pages_concurrency=pages_concurrency, extractor=extractor_html)
 
 
 class User(Helper):
     def __init__(self, url: str, core: Optional[BaseCore]):
-        super().__init__(core)
+        super().__init__(core, video=Video)
         self.url = url
         self.core = core
         self.content = self.core.fetch(url)
@@ -310,31 +246,29 @@ class User(Helper):
 
     @cached_property
     def base_json(self):
-        url = f"{self.url}/videos/best/0?from=goldtab"
+        url = f"{self.url}/videos/best/0"
         content = self.core.fetch(url)
         data = json.loads(html.unescape(content))
         return data
 
-    def videos(self, max_workers: int = 20, pages: int = 0) -> Generator[Video, None, None]:
-        def _extractor(content):
-            data = json.loads(html.unescape(content))
+    def videos(self, videos_concurrency: int = 5, pages_concurrency: int = 2,
+               pages: int = 0) -> Generator[Video, None, None]:
 
-            if data["code"] == 404:
-                return False
+        if pages > self.total_pages:
+            self.logger.warning(f"You are trying to fetch more pages than there are... Reducing to: {self.total_pages}")
+            pages = int(self.total_pages)
 
-            videos = data["videos"]
-            video_urls = []
-            for video in videos:
-                video_urls.append(f"https://xnxx.com{video.get('u')}")
-
-            return video_urls
-
-        yield from self.iterator(max_workers=max_workers, pages=pages, from_goldtab=True, extractor_function=_extractor,
-                                 user=True)
+        page_urls = [f"{self.url}/videos/best/{page}" for page in range(pages)]
+        yield from self.iterator(page_urls=page_urls, videos_concurrency=videos_concurrency,
+                                 pages_concurrency=pages_concurrency, extractor=extractor_json)
 
     @cached_property
     def total_videos(self) -> int:
-        return self.base_json["nb_videos"]
+        return int(self.base_json["nb_videos"])
+
+    @cached_property
+    def total_pages(self) -> int:
+        return round(int(self.base_json["nb_per_page"]) // self.total_videos)
 
     @cached_property
     def total_video_views(self) -> str:
@@ -344,7 +278,8 @@ class User(Helper):
 class Client:
     def __init__(self, core: Optional[BaseCore] = None):
         self.core = core or BaseCore(config=RuntimeConfig())
-        self.core.initialize_session(headers)
+        self.core.initialize_session()
+        self.core.session.headers.update({"Referer": "https://www.xnxx.com/"})
 
     def get_video(self, url) -> Video:
         """

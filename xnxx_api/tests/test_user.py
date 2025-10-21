@@ -12,7 +12,7 @@ def test_video_views():
 
 def test_videos():
     for idx, video in enumerate(user.videos()):
-        if idx == 3:
+        if idx == 10:
             break
         for object in objects_video:
             assert isinstance(getattr(video, object), str)

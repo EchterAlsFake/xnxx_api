@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xnxx_api"
-version = "1.6.0"
+version = "1.6.1"
 description = "A Python API for the Porn Site xnxx.com"
 readme = "README.md"
 requires-python = ">=3.6"
@@ -15,6 +15,8 @@ authors = [
 dependencies = [
     "bs4",
     "eaf_base_api",
+    "lxml",
+    "h2"
 ]
 optional-dependencies = {av = ["av"], ffmpeg = ["ffmpeg-progress-yield"]}
 classifiers = [

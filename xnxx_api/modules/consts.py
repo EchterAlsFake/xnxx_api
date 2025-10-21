@@ -1,5 +1,8 @@
 import re
+import html
+import json
 
+from typing import List
 # ROOT URLs
 ROOT_URL = "https://www.xnxx.com/"
 
@@ -23,3 +26,27 @@ REGEX_MODEL_TOTAL_VIDEO_VIEWS = re.compile(r'<span class="icon-f icf-eye"></span
 headers = {
     "Referer": "https://www.xnxx.com/"
 }
+
+
+def extractor_json(content: str) -> List[str]:
+    data = json.loads(html.unescape(content))
+
+    if data["code"] == 404:
+        return []
+
+    videos = data["videos"]
+    video_urls = []
+    for video in videos:
+        video_urls.append(f"https://xnxx.com{video.get('u')}")
+
+    return video_urls
+
+
+def extractor_html(content: str) -> List[str]:
+    urls = REGEX_SCRAPE_VIDEOS.findall(content)
+    video_urls = []
+    for url_ in urls:
+        if not "THUMBNUM" in url_:
+            video_urls.append(f"https://www.xnxx.com/video-{url_}")
+
+    return video_urls
