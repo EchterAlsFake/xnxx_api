@@ -219,7 +219,7 @@ class Search(Helper):
     def total_pages(self) -> str:
         return REGEX_SEARCH_TOTAL_PAGES.search(self.html_content).group(1)
 
-    def videos(self, pages_concurrency: int = 2, videos_concurrency: int = 5,  pages: int = 0) -> Generator[Video, None, None]:
+    def videos(self, pages_concurrency: int = None, videos_concurrency: int = None,  pages: int = 0) -> Generator[Video, None, None]:
         self.url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}"
 
         if pages >= int(self.total_pages):
@@ -228,6 +228,8 @@ class Search(Helper):
 
         page_urls = [self.url]
         page_urls.extend([f"{self.url}/{page}" for page in range(1, int(pages))])
+        videos_concurrency = videos_concurrency or self.core.config.videos_concurrency
+        pages_concurrency = pages_concurrency or self.core.config.pages_concurrency
 
         yield from self.iterator(page_urls=page_urls, videos_concurrency=videos_concurrency,
                                  pages_concurrency=pages_concurrency, extractor=extractor_html)
@@ -251,7 +253,7 @@ class User(Helper):
         data = json.loads(html.unescape(content))
         return data
 
-    def videos(self, videos_concurrency: int = 5, pages_concurrency: int = 2,
+    def videos(self, videos_concurrency: int = None, pages_concurrency: int = None,
                pages: int = 0) -> Generator[Video, None, None]:
 
         if pages > self.total_pages:
@@ -259,6 +261,8 @@ class User(Helper):
             pages = int(self.total_pages)
 
         page_urls = [f"{self.url}/videos/best/{page}" for page in range(pages)]
+        videos_concurrency = videos_concurrency or self.core.config.videos_concurrency
+        pages_concurrency = pages_concurrency or self.core.config.pages_concurrency
         yield from self.iterator(page_urls=page_urls, videos_concurrency=videos_concurrency,
                                  pages_concurrency=pages_concurrency, extractor=extractor_json)
 
