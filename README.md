@@ -6,16 +6,32 @@
     <a href="https://echteralsfake.me/ci/xnxx_api/badge.svg"><img src="https://echteralsfake.me/ci/xnxx_api/badge.svg" alt="API Tests"/></a>
     </div>
 
-# Description
- 
-XNXX API is an API for xnxx.com. It allows you to fetch information from videos using regexes and requests.
-
 # Disclaimer
+> [!IMPORTANT]
+> This is an unofficial and unaffiliated project. Please read the full disclaimer before use:
+> **[DISCLAIMER.md](https://github.com/EchterAlsFake/API_Docs/blob/master/Disclaimer.md)**
+>
+> By using this project you agree to comply with the target site’s rules, copyright/licensing requirements,
+> and applicable laws. Do not use it to bypass access controls or scrape at disruptive rates.
 
-> [!IMPORTANT] 
-> XNXX API is in violation to the ToS of xnxx.com!
-> If you are the website owner of xnxx.com, contact me at my E-Mail, and I'll take this repository immediately offline.
-> EchterAlsFake@proton.me
+# Features
+- Fetch videos + metadata
+- Download videos
+- Fetch users
+- Search for videos
+- Built-in caching
+- Easy interface
+- Great type hinting
+- Proxy support
+- Very customizable
+
+# Supported Platforms
+This API has been tested and confirmed working on:
+
+- Windows 11 (x64) 
+- macOS Sequoia (x86_64)
+- Linux (Arch) (x86_64)
+- Android 16 (aarch64)
 
 # Quickstart
 
