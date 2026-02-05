@@ -22,6 +22,13 @@ from typing import Union, Generator, Optional
 from base_api.modules.config import RuntimeConfig
 from base_api.base import BaseCore, Callback, setup_logger, Helper
 
+try:
+    import lxml
+    parser = "lxml"
+
+except (ModuleNotFoundError, ImportError):
+    parser = "html.parser"
+
 
 class Video:
     def __init__(self, url, core: Optional[BaseCore] = None):
@@ -59,7 +66,7 @@ class Video:
         return all(content in tag.text for content in script_contents)
 
     def get_metadata_matches(self) -> None:
-        soup = BeautifulSoup(self.html_content, 'lxml')
+        soup = BeautifulSoup(self.html_content, parser)
         metadata_span = soup.find('span', class_='metadata')
         metadata_text = metadata_span.get_text()
 
@@ -67,7 +74,7 @@ class Video:
         self.metadata_matches = re.findall(r'(\d+min|\d+p|\d[\d.,]*\s*[views]*)', metadata_text)
 
     def get_script_content(self) -> None:
-        soup = BeautifulSoup(self.html_content, "lxml")
+        soup = BeautifulSoup(self.html_content, parser)
         target_script = soup.find(self.is_desired_script)
         if target_script:
             self.script_content = target_script.text
@@ -76,7 +83,7 @@ class Video:
             raise InvalidResponse("Couldn't extract JSON from HTML")
 
     def extract_json_from_html(self) -> None:
-        soup = BeautifulSoup(self.html_content, "lxml")
+        soup = BeautifulSoup(self.html_content, parser)
         # Find the <script> tag with type="application/ld+json"
         script_tag = soup.find('script', {'type': 'application/ld+json'})
 
