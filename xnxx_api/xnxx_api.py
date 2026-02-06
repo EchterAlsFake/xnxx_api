@@ -13,14 +13,14 @@ import html
 import json
 import logging
 import argparse
-import traceback
+import threading
 
 from httpx import Response
 from bs4 import BeautifulSoup
 from functools import cached_property
 from typing import Union, Generator, Optional
 from base_api.modules.config import RuntimeConfig
-from base_api.base import BaseCore, Callback, setup_logger, Helper
+from base_api.base import BaseCore, setup_logger, Helper
 
 try:
     import lxml
@@ -104,21 +104,34 @@ class Video:
     def get_segments(self, quality: str) -> list:
         return self.core.get_segments(quality=quality, m3u8_url_master=self.m3u8_base_url)
 
-    def download(self, quality: str, downloader: str, path: str = "./", callback=Callback.text_progress_bar,
-                 no_title: bool = False, remux: bool = False, callback_remux = None) -> bool:
-
-        if no_title is False:
+    def download(self, quality, path="./", callback=None, no_title=False, remux: bool = False,
+                 callback_remux=None, start_segment: int = 0, stop_event: Optional[threading.Event] = None,
+                 segment_state_path: Optional[str] = None, segment_dir: Optional[str] = None,
+                 return_report: bool = False, cleanup_on_stop: bool = True, keep_segment_dir: bool = False
+                 ) -> bool:
+        """
+        :param callback:
+        :param quality:
+        :param path:
+        :param no_title:
+        :param remux:
+        :param callback_remux:
+        :param start_segment:
+        :param stop_event:
+        :param segment_state_path:
+        :param segment_dir:
+        :param return_report:
+        :param cleanup_on_stop:
+        :param keep_segment_dir:
+        :return:
+        """
+        if not no_title:
             path = os.path.join(path, f"{self.title}.mp4")
 
-        try:
-            self.core.download(video=self, quality=quality, path=path, callback=callback, downloader=downloader, remux=remux,
-                               callback_remux=callback_remux)
-            return True
-
-        except Exception:
-            error = traceback.format_exc()
-            self.logger.error(error)
-            return False
+        return self.core.download(video=self, quality=quality, path=path, callback=callback, remux=remux,
+                           callback_remux=callback_remux, start_segment=start_segment, stop_event=stop_event,
+                           segment_state_path=segment_state_path, segment_dir=segment_dir, return_report=return_report,
+                           cleanup_on_stop=cleanup_on_stop, keep_segment_dir=keep_segment_dir)
 
     @cached_property
     def title(self) -> str:
@@ -326,7 +339,6 @@ def main():
     parser.add_argument("--quality", metavar="best,half,worst", type=str, help="The video quality (best,half,worst)", required=True)
     parser.add_argument("--file", metavar="Source to .txt file", type=str, help="(Optional) Specify a file with URLs (separated with new lines)")
     parser.add_argument("--output", metavar="Output directory", type=str, help="The output path (with filename)", required=True)
-    parser.add_argument("--downloader", type=str, help="The Downloader (threaded,ffmpeg,default)", required=True)
     parser.add_argument("--no-title", metavar="True,False", type=str, help="Whether to apply video title automatically to output path or not", required=True)
 
     args = parser.parse_args()
@@ -335,7 +347,7 @@ def main():
     if args.download:
         client = Client()
         video = client.get_video(args.download)
-        video.download(quality=args.quality, path=args.output, downloader=args.downloader, no_title=no_title)
+        video.download(quality=args.quality, path=args.output, no_title=no_title)
 
     if args.file:
         videos = []

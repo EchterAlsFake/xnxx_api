@@ -79,5 +79,8 @@ def test_get_segments():
     assert len(segments) > 10
 
 def test_download_low():
-    assert video.download(quality="worst", downloader="threaded") is True
-    assert video.download(quality="worst", downloader="threaded", remux=True) is True
+    fortnite_1 = video.download(quality="worst", remux=True, return_report=True)
+    fortnite_2 = video.download(quality="worst", remux=False, return_report=True)
+
+    assert fortnite_1["status"] == "completed"
+    assert fortnite_2["status"] == "completed"
