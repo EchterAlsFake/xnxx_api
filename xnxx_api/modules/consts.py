@@ -30,7 +30,6 @@ headers = {
 
 def extractor_json(content: str) -> List[str]:
     data = json.loads(html.unescape(content))
-
     if data["code"] == 404:
         return []
 

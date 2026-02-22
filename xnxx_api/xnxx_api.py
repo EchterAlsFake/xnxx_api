@@ -9,11 +9,13 @@ except (ModuleNotFoundError, ImportError):
     from .modules.search_filters import *
 
 import os
+import re
 import html
 import json
 import logging
 import argparse
 import threading
+import math
 
 from httpx import Response
 from bs4 import BeautifulSoup
@@ -276,7 +278,7 @@ class User(Helper):
     def videos(self, videos_concurrency: int = None, pages_concurrency: int = None,
                pages: int = 0) -> Generator[Video, None, None]:
 
-        if pages > self.total_pages:
+        if pages >= self.total_pages:
             self.logger.warning(f"You are trying to fetch more pages than there are... Reducing to: {self.total_pages}")
             pages = int(self.total_pages)
 
@@ -292,7 +294,7 @@ class User(Helper):
 
     @cached_property
     def total_pages(self) -> int:
-        return round(int(self.base_json["nb_per_page"]) // self.total_videos)
+        return int(math.ceil(self.total_videos / int(self.base_json["nb_per_page"])))
 
     @cached_property
     def total_video_views(self) -> str:

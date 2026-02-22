@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "xnxx_api"
-version = "1.6.3"
+version = "1.6.4"
 description = "A Python API for the Porn Site xnxx.com"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.9"
