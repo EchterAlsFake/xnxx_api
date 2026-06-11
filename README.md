@@ -17,13 +17,28 @@
 # Features
 - Fetch videos + metadata
 - Download videos
-- Fetch users
+- Fetch Channels
+- Fetch Pornstars
+- Fetch Creators
+- Fetch Shorts
 - Search for videos
+- Fetch playlists
+- Asynchronous
 - Built-in caching
 - Easy interface
 - Great type hinting
-- Proxy support
-- Very customizable
+
+#### Networking Features
+- HTTP 2.0 / HTTP 3.0
+- Browser impersonation
+- Custom JA3
+- All proxy types
+- Proxy authentication
+- Speed Limit
+- DNS over HTTPS
+- And even more...
+- All of this is configurable and can be adjusted as you like!
+
 
 # Supported Platforms
 This API has been tested and confirmed working on:
@@ -41,19 +56,22 @@ This API has been tested and confirmed working on:
 
 
 ```python
+import asyncio
 from xnxx_api import Client
-# Initialize a Client object
-client = Client()
 
-# Fetch a video
-video_object = client.get_video("<insert_url_here>")
-
-# Information from Video objects
-print(video_object.title)
-print(video_object.likes)
-# Download the video
-
-video_object.download(downloader="threaded", quality="best", path="your_output_path + filename")
+async def main():
+    # Initialize a Client object
+    client = Client()
+    
+    # Fetch a video
+    video_object = await client.get_video("<insert_url_here>")
+    
+    # Information from Video objects
+    print(video_object.title)
+    print(video_object.likes)
+    # Download the video
+    
+    await video_object.download(downloader="threaded", quality="best", path="your_output_path + filename")
 
 # SEE DOCUMENTATION FOR MORE
 ```
@@ -83,4 +101,4 @@ Pull requests are also welcome.
 
 # License
 Licensed under the LGPLv3 License
-<br>Copyright (C) 2023–2025 Johannes Habel
+<br>Copyright (C) 2023–2026 Johannes Habel

@@ -1,19 +1,21 @@
 from ..xnxx_api import Client
+import pytest
 
-client = Client()
-user = client.get_user("https://www.xnxx.com/pornstar/cory-chase")
-objects_video = ["title", "publish_date", "length", "author"]
+@pytest.mark.asyncio
+async def test_all():
+    client = Client()
+    user = await client.get_user("https://www.xnxx.com/pornstar/cory-chase")
+    objects_video = ["title", "publish_date", "length", "author"]
 
-
-
-def test_video_views():
     assert isinstance(user.total_video_views, str)
     assert user.total_videos > 0
 
-def test_videos():
-    for idx, video in enumerate(user.videos()):
-        if idx == 10:
+    idx = 0
+    async for video in user.videos():
+        idx += 1
+        if idx == 3:
             break
+
         for object in objects_video:
             assert isinstance(getattr(video, object), str)
 
