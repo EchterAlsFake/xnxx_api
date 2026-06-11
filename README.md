@@ -17,12 +17,8 @@
 # Features
 - Fetch videos + metadata
 - Download videos
-- Fetch Channels
-- Fetch Pornstars
-- Fetch Creators
-- Fetch Shorts
+- Fetch Users
 - Search for videos
-- Fetch playlists
 - Asynchronous
 - Built-in caching
 - Easy interface
