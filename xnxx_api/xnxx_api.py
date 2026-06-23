@@ -27,7 +27,7 @@ from functools import cached_property
 from curl_cffi import Response, AsyncSession
 from base_api.base import BaseCore, setup_logger, Helper
 from base_api.modules.static_functions import str_to_bool
-from base_api.modules.errors import NetworkingError, InvalidProxy, BotProtectionDetected, UnknownError
+from base_api.modules.errors import NetworkingError, InvalidProxy, BotProtectionDetected, UnknownError, ResourceGone
 
 try:
     import lxml
@@ -35,6 +35,15 @@ try:
 
 except (ModuleNotFoundError, ImportError):
     parser = "html.parser"
+
+
+async def on_error(url: str, error: Exception, attempt: int) -> bool:
+    print(f"URL: {url}, ERROR: {error}, Attempt: {attempt}")
+
+    if isinstance(error, ResourceGone):
+        return False
+
+    return True
 
 
 async def get_html_content(core: BaseCore, url: str) -> str | None | dict:
@@ -140,8 +149,8 @@ class Video:
     async def get_segments(self, quality: str) -> list:
         return await self.core.get_segments(quality=quality, m3u8_url_master=self.m3u8_base_url)
 
-    async def download(self, quality, path="./", callback=None, no_title=False, remux: bool = False,
-                 callback_remux=None, start_segment: int = 0, stop_event: threading.Event | None = None,
+    async def download(self, quality, path="./", callback: callback_hint=None, no_title=False, remux: bool = False,
+                 callback_remux: callback_hint =None, start_segment: int = 0, stop_event: threading.Event | None = None,
                  segment_state_path: str | None = None, segment_dir: str | None = None,
                  return_report: bool = False, cleanup_on_stop: bool = True, keep_segment_dir: bool = False
                  ) -> bool | DownloadReport:
@@ -278,7 +287,10 @@ class Search(Helper):
     def total_pages(self) -> str:
         return REGEX_SEARCH_TOTAL_PAGES.search(self.html_content).group(1)
 
-    async def videos(self, pages_concurrency: int | None = None, videos_concurrency: int | None = None,  pages: int = 0) -> AsyncGenerator[Video, None]:
+    async def videos(self, pages_concurrency: int | None = None, videos_concurrency: int | None = None,  pages: int = 0,
+                     on_video_error: on_error_hint = on_error,
+                     on_page_error: on_error_hint = None
+                     ) -> AsyncGenerator[Video, None]:
         self.url = f"https://www.xnxx.com/search{self.mode}{self.upload_time}{self.length}{self.searching_quality}/{self.query}"
 
         if pages >= int(self.total_pages):
@@ -291,7 +303,8 @@ class Search(Helper):
         pages_concurrency = pages_concurrency or self.core.configuration.pages_concurrency
         assert videos_concurrency and pages_concurrency
         async for video in self.iterator(target_page_urls=page_urls, max_video_concurrency=videos_concurrency,
-                                 max_page_concurrency=pages_concurrency, video_link_extractor=extractor_html):
+                                 max_page_concurrency=pages_concurrency, video_link_extractor=extractor_html,
+                                         on_video_error=on_video_error, on_page_error=on_page_error):
             if isinstance(video, Video):
                 yield video
 
@@ -328,7 +341,8 @@ class User(Helper):
         return self._base_json
 
     async def videos(self, videos_concurrency: int | None = None, pages_concurrency: int | None = None,
-               pages: int = 0) -> AsyncGenerator[Video, None]:
+               pages: int = 0, on_video_error: on_error_hint = on_error, on_page_error: on_error_hint = None
+                     ) -> AsyncGenerator[Video, None]:
 
         if pages >= self.total_pages:
             self.logger.warning(f"You are trying to fetch more pages than there are... Reducing to: {self.total_pages}")
@@ -339,7 +353,8 @@ class User(Helper):
         pages_concurrency = pages_concurrency or self.core.configuration.pages_concurrency
         assert videos_concurrency and pages_concurrency
         async for video in self.iterator(target_page_urls=page_urls, max_video_concurrency=videos_concurrency,
-                                 max_page_concurrency=pages_concurrency, video_link_extractor=extractor_html):
+                                 max_page_concurrency=pages_concurrency, video_link_extractor=extractor_html,
+                                         on_video_error=on_video_error, on_page_error=on_page_error):
             if isinstance(video, Video):
                 yield video
 

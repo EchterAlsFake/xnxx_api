@@ -7,7 +7,7 @@ name = "xnxx_api"
 version = "2.0"
 description = "A Python API for the Porn Site xnxx.com"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = "LGPL-3.0-only"
 license-files = ["LICENSE"]
 authors = [
